@@ -1,0 +1,41 @@
+{
+  "name": "webpack-usage-example",
+  "version": "0.0.10",
+  "description": "An example how to use OpenSheetMusicDisplay within a Webpack build.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "webpack",
+    "start": "http-server ./dist",
+    "webpack": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opensheetmusicdisplay/webpack-usage-example.git"
+  },
+  "keywords": [
+    "opensheetmusicdisplay",
+    "vexflow",
+    "webpack",
+    "example"
+  ],
+  "author": "Sebastian Haas <s.haas@phonicscore.com> (http://sebastianhaas.at/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/opensheetmusicdisplay/webpack-usage-example/issues"
+  },
+  "homepage": "https://github.com/opensheetmusicdisplay/webpack-usage-example#readme",
+  "devDependencies": {
+    "copy-webpack-plugin": "^4.5.2",
+    "html-webpack-plugin": "^3.2.0",
+    "http-server": "^0.11.1",
+    "json-loader": "^0.5.7",
+    "ts-loader": "^4.4.2",
+    "typescript": "^2.9.2",
+    "webpack": "^4.14.0",
+    "webpack-cli": "^3.0.8"
+  },
+  "dependencies": {
+    "opensheetmusicdisplay": "^0.6.4"
+  }
+}
