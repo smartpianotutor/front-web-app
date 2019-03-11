@@ -6,6 +6,10 @@ const config = {
   entry: './index.ts',
   mode: 'production',
   devtool: 'inline-source-map',
+  devServer: {
+    contentBase: './dist',
+    hot: true
+  },
   output: {
     path: __dirname + '/dist',
     filename: 'index.bundle.js'
@@ -32,7 +36,8 @@ const config = {
     from: 'resources/SampleMusic.xml',
     to: 'musicXmlSample.xml'
   },
-  ])
+  ]),
+  new webpack.HotModuleReplacementPlugin()
   ]
 };
 

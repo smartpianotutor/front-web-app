@@ -1,4 +1,6 @@
 import { OpenSheetMusicDisplay, Cursor, VoiceEntry, Note, StemDirectionType } from "opensheetmusicdisplay";
+import { parseOpenSheetMusicDisplayVexflowNotes } from "./resources/utils.js";
+
 
 let osmd: OpenSheetMusicDisplay;
 
@@ -11,6 +13,7 @@ let container: HTMLElement = <HTMLElement>document.createElement("div");
  * stub created by Webpack, so you won't find any actual .html sources.
  */
 document.body.appendChild(container);
+container.onclick = handleSVGClick;
 /*
  * Create a new instance of OpenSheetMusicDisplay and tell it to draw inside
  * the container we've created in the steps before.
@@ -19,6 +22,7 @@ document.body.appendChild(container);
  */
 osmd = new OpenSheetMusicDisplay(container, {autoResize: false});
 osmd.setLogLevel('info');
+let cursor: Cursor = osmd.cursor;
 
 /*
  * Load our MusicXMl and display it. The file is renamed by Webpack during bundling, it's
@@ -26,17 +30,30 @@ osmd.setLogLevel('info');
  */
 loadMusicXML("musicXmlSample.xml");
 
-/** Some example code to use OSMD classes after rendering a score. */
-function afterRender() {
-	let cursor: Cursor = osmd.cursor;
-	cursor.show();
+function handleSVGClick() {
+	console.log("CLICKED");
 	cursor.next();
 	const cursorVoiceEntry: VoiceEntry = cursor.Iterator.CurrentVoiceEntries[0];
 	const baseNote: Note = cursorVoiceEntry.Notes[0];
 	console.log("Stem direction of VoiceEntry under Cursor: " + StemDirectionType[cursorVoiceEntry.StemDirection]);
 	console.log("base note of Voice Entry at second cursor position: " + baseNote.Pitch.ToString());
+}
 
+/** Some example code to use OSMD classes after rendering a score. */
+function afterRender() {
 	osmd.setOptions( { autoResize: true });
+	cursor.show();
+
+	// for (var i=0; i < 10; i++ ) {
+	// 	setTimeout(() => {
+	// 		cursor.next();
+	// 		const cursorVoiceEntry: VoiceEntry = cursor.Iterator.CurrentVoiceEntries[0];
+	// 		const baseNote: Note = cursorVoiceEntry.Notes[0];
+	// 		console.log(cursorVoiceEntry);
+	// 		console.log("Stem direction of VoiceEntry under Cursor: " + StemDirectionType[cursorVoiceEntry.StemDirection]);
+	// 		console.log("base note of Voice Entry at second cursor position: " + baseNote.Pitch.ToString());
+	// 	}, 1000*i);
+	// }
 }
 
 /**

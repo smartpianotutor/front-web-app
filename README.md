@@ -3,8 +3,11 @@
 ## Usage
 ```
 $ npm install
-$ npm start
+$ npm start OR
+$ npm run start:dev FOR DEV
 ```
+
+FOR DEV:
 
 Now you can browse to http://127.0.0.1:8080 and see it running.
 
