@@ -23,3 +23,9 @@ You may have to do a hard refresh in the browser (Ctrl+F5), Chrome sometimes cac
 
 ### Build artifacts
 * `dist/` - directory containing all build artifacts, will be served from a local http server on `npm start`
+
+## API setup
+Only tested on Ubuntu
+Python 3.6
+install packages in api/requirements.txt
+https://launchpad.net/~mscore-ubuntu/+archive/ubuntu/mscore-stable
