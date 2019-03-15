@@ -2,3 +2,5 @@ music21
 matplotlib
 numpy
 scipy
+flask
+flask-login
