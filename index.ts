@@ -1,5 +1,5 @@
 import { OpenSheetMusicDisplay, Cursor, VoiceEntry, Note, StemDirectionType } from "opensheetmusicdisplay";
-import { parseOpenSheetMusicDisplayVexflowNotes } from "./resources/utils.js";
+// import { parseOpenSheetMusicDisplayVexflowNotes } from "./resources/utils.js";
 
 
 let osmd: OpenSheetMusicDisplay;
