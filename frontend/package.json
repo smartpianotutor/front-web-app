@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "webpack",
     "start": "http-server ./dist",
     "start:dev": "webpack-dev-server",
     "webpack": "webpack"

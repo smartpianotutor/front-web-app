@@ -5,9 +5,20 @@ RUN apt update && \
     add-apt-repository ppa:mscore-ubuntu/mscore-stable -y && \
     add-apt-repository ppa:jonathonf/python-3.6 -y && \
     apt update && \
-    apt install musescore python3.6 -y
+    apt install musescore python3.6 python3-pip -y
 
-RUN apt install python3-pip -y && \
-    pip3 install -r requirements.txt
+RUN mkdir /api
+COPY requirements.txt /api
+WORKDIR /api
 
-CMD "FLASK_APP=/app/main.py FLASK_DEBUG=1 python3 -m flask run"
+RUN pip3 install -r requirements.txt
+
+RUN apt install locales -y
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8
+
+ENV LANG en_US.UTF-8
+ENV FLASK_DEBUG 1
+
+CMD ["python3", "-m", "flask", "run", "-h", "0.0.0.0"]
