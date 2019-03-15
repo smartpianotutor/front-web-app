@@ -8,7 +8,10 @@ const config = {
   devtool: 'inline-source-map',
   devServer: {
     contentBase: './dist',
-    hot: true
+    hot: true,
+    proxy: {
+      '/api': 'http://api:5000'
+    }
   },
   output: {
     path: __dirname + '/dist',

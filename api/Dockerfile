@@ -8,6 +8,6 @@ RUN apt update && \
     apt install musescore python3.6 -y
 
 RUN apt install python3-pip -y && \
-    sudo pip3 install -r requirements.txt
+    pip3 install -r requirements.txt
 
 CMD "FLASK_APP=/app/main.py FLASK_DEBUG=1 python3 -m flask run"
