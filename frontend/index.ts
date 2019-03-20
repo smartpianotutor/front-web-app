@@ -1,59 +1,62 @@
 import { OpenSheetMusicDisplay, Cursor, VoiceEntry, Note, StemDirectionType } from "opensheetmusicdisplay";
-// import { parseOpenSheetMusicDisplayVexflowNotes } from "./resources/utils.js";
 
-
-let osmd: OpenSheetMusicDisplay;
-
-/*
- * Create a container element for OpenSheetMusicDisplay...
- */
-let container: HTMLElement = <HTMLElement>document.createElement("div");
-/*
- * ... and attach it to our HTML document's body. The document itself is a HTML5
- * stub created by Webpack, so you won't find any actual .html sources.
- */
+const container: HTMLElement = <HTMLElement>document.createElement("div");
 document.body.appendChild(container);
 container.onclick = handleSVGClick;
-/*
- * Create a new instance of OpenSheetMusicDisplay and tell it to draw inside
- * the container we've created in the steps before.
- * The second parameter is an IOSMDOptions object.
- * autoResize tells OSMD not to redraw on resize.
- */
-osmd = new OpenSheetMusicDisplay(container, {autoResize: false});
+
+const osmd = new OpenSheetMusicDisplay(container, {autoResize: false});
 osmd.setLogLevel('info');
 let cursor: Cursor = osmd.cursor;
 
-/*
- * Load our MusicXMl and display it. The file is renamed by Webpack during bundling, it's
- * Muzio Clementi's Sonatina Opus 36 No 1, Part 1, which you can find next to this file.
- */
-loadMusicXML("musicXmlSample.xml");
+// Current Sheet Constants
+const beatsPerSecond: number = 120 / 60;
+
+
+startUp();
+
+function startUp() {
+	loadMusicXML("musicXmlSample.xml");
+}
 
 function handleSVGClick() {
 	console.log("CLICKED");
-	cursor.next();
-	const cursorVoiceEntry: VoiceEntry = cursor.Iterator.CurrentVoiceEntries[0];
-	const baseNote: Note = cursorVoiceEntry.Notes[0];
-	console.log("Stem direction of VoiceEntry under Cursor: " + StemDirectionType[cursorVoiceEntry.StemDirection]);
-	console.log("base note of Voice Entry at second cursor position: " + baseNote.Pitch.ToString());
 }
 
-/** Some example code to use OSMD classes after rendering a score. */
 function afterRender() {
 	osmd.setOptions( { autoResize: true });
 	cursor.show();
+	window.requestAnimationFrame(update);
+}
 
-	// for (var i=0; i < 10; i++ ) {
-	// 	setTimeout(() => {
-	// 		cursor.next();
-	// 		const cursorVoiceEntry: VoiceEntry = cursor.Iterator.CurrentVoiceEntries[0];
-	// 		const baseNote: Note = cursorVoiceEntry.Notes[0];
-	// 		console.log(cursorVoiceEntry);
-	// 		console.log("Stem direction of VoiceEntry under Cursor: " + StemDirectionType[cursorVoiceEntry.StemDirection]);
-	// 		console.log("base note of Voice Entry at second cursor position: " + baseNote.Pitch.ToString());
-	// 	}, 1000*i);
-	// }
+var noteTimeStamp: number = null;
+var noteDuration: number = 0;
+
+/* Runs approx 60 times a second */
+function update(timestamp: number) {
+	if (!noteTimeStamp) noteTimeStamp = timestamp;
+	var timeSinceLastNote = timestamp - noteTimeStamp;
+
+	if (timeSinceLastNote >= noteDuration * 1000) {
+
+		if (noteDuration) cursor.next();
+
+		const cursorVoiceEntry: VoiceEntry = cursor.Iterator.CurrentVoiceEntries[0];
+		const baseNote: Note = cursorVoiceEntry.Notes[0];
+		const currentNoteLength: number = baseNote.Length.RealValue;
+
+		noteDuration = (currentNoteLength * 4) / beatsPerSecond;
+
+		console.log(baseNote.Pitch ? baseNote.Pitch.ToString(): "No Note");
+		console.log("MIDI ID:", baseNote.halfTone);
+		console.log("Note duration in time:", noteDuration);
+		console.log("Note timestamp", timestamp);
+
+		noteTimeStamp = timestamp;
+	}
+
+	if (cursor.Iterator.CurrentVoiceEntries[0].Notes[0]) {
+	  window.requestAnimationFrame(update);
+	}
 }
 
 /**
