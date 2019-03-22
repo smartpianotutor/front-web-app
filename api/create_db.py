@@ -3,29 +3,29 @@ import sqlite3
 import time
 
 
-def create_db():
+def create_db(dbname):
     start = time.time()
-    conn = sqlite3.connect('database.sqlite')
+    conn = sqlite3.connect(dbname)
     c = conn.cursor()
 
     c.executescript('''
         CREATE TABLE IF NOT EXISTS User (
-            user_id INTEGER PRIMARY KEY,
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             password_sha256 TEXT
         );
         
         CREATE TABLE IF NOT EXISTS Snippet (
-        snippet_id INTEGER PRIMARY KEY,
-        musicxml TEXT,
-        time_created DATETIME DEFAULT CURRENT_TIMESTAMP
+            snippet_id INTEGER PRIMARY KEY,
+            musicxml TEXT,
+            time_created DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         
         CREATE TABLE IF NOT EXISTS PracticeSession (
             timestamp DATETIME PRIMARY KEY DEFAULT CURRENT_TIMESTAMP,
             snippet_id INTEGER,
             user_id INTEGER,
-            FOREIGN KEY (snippet_id) REFERENCES Snippet (snippet_id)
+            FOREIGN KEY (snippet_id) REFERENCES Snippet (snippet_id),
             FOREIGN KEY (user_id) REFERENCES User (user_id)
         );
         
