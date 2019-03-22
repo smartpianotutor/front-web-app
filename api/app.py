@@ -1,4 +1,6 @@
-import music21
+from music21 import *
+from flask import Response
+
 
 # music21.environment.set('musicxmlPath', '/usr/bin/musescore')
 # river = music21.converter.parse('river.mxl')
@@ -74,4 +76,17 @@ def logout():
     else:
         return '{"success": false}'
 
+@app.route('/api/get_sheet_music', methods=['GET'])
+def get_sheet():
+    s = stream.Stream()
+    s.append(note.Note('C', quarterLength=0.25))
+    s.append(note.Note('C', quarterLength=0.25))
+    s.append(note.Note('C', quarterLength=0.25))
+    s.append(note.Note('C', quarterLength=0.25))
+    GEX = musicxml.m21ToXml.GeneralObjectExporter(s)
+    out = GEX.parse()
+    outStr = out.decode('utf-8').strip()
+    return Response(outStr, mimetype='text/xml')
+
 app.run(host='0.0.0.0')
+
