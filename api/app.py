@@ -11,10 +11,15 @@ import music21
 # riverChords.show()
 
 from flask import Flask
+from create_db import create_db
+
+create_db()
 app = Flask(__name__)
+
 
 @app.route('/api/')
 def hello_world():
     return 'Hello, World!!!'
+
 
 app.run(host='0.0.0.0')
