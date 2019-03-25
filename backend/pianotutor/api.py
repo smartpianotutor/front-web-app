@@ -7,7 +7,7 @@ from pianotutor.auth import login_required
 from pianotutor.db import get_db
 
 
-bp = Blueprint('blog', __name__, url_prefix='/api')
+bp = Blueprint('api', __name__, url_prefix='/api')
 
 
 @bp.route('/get_sheet_music', methods=('GET',))
