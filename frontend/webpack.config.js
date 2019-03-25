@@ -4,6 +4,9 @@ const webpack = require('webpack');
 
 const config = {
     entry: './index.ts',
+    resolve: {
+        extensions: ['.ts', '.js', '.json']
+    },
     devtool: 'inline-source-map',
     devServer: {
         contentBase: './dist',

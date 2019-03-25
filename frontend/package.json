@@ -25,6 +25,8 @@
     "webpack-dev-server": "^3.2.1"
   },
   "dependencies": {
+    "@types/node": "^11.11.6",
+    "@types/webmidi": "^2.0.3",
     "opensheetmusicdisplay": "^0.6.4"
   }
 }
