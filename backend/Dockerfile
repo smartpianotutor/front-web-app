@@ -7,9 +7,9 @@ RUN apt update && \
     apt update && \
     apt install musescore python3.6 python3-pip -y
 
-RUN mkdir /api
-COPY requirements.txt /api
-WORKDIR /api
+RUN mkdir /backend
+COPY requirements.txt /backend
+WORKDIR /backend
 
 RUN pip3 install -r requirements.txt
 
@@ -19,6 +19,8 @@ RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     update-locale LANG=en_US.UTF-8
 
 ENV LANG en_US.UTF-8
+ENV FLASK_APP=pianotutor
+ENV FLASK_ENV=development
 ENV FLASK_DEBUG 1
 
 CMD ["python3", "-m", "flask", "run", "-h", "0.0.0.0"]
