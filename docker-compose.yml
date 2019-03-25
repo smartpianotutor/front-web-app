@@ -7,7 +7,7 @@ services:
     ports:
       - 5000:5000
     volumes:
-      - ./api:/api
+      - ./backend:/backend
   frontend:
     build:
       context: ./frontend/

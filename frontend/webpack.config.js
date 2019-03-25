@@ -12,7 +12,9 @@ const config = {
         contentBase: './dist',
         hot: true,
         proxy: {
-            '/api': 'http://api:5000'
+            '/api': 'http://api:5000',
+            '/auth': 'http://api:5000',
+            '/hello': 'http://api:5000',
         },
         host: '0.0.0.0', // can be overwritten by process.env.HOST
         port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
