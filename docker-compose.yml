@@ -19,3 +19,4 @@ services:
       - 8080:8080
     volumes:
       - ./frontend:/app
+      - /app/node_modules # make sure we don't overwrite the installed node_modules with the previous bind mount

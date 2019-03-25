@@ -4,7 +4,7 @@
     "noImplicitAny": false,
     "removeComments": true,
     "preserveConstEnums": true,
-    "lib": ["es5", "es6", "dom"],
+    "lib": ["es5", "es6", "dom"]
   },
   "files": [
     "index.ts"
