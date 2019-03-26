@@ -47,20 +47,20 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
 
             if (this.currentNoteDuration) this.cursor.next();
 
-            if (this.cursor.Iterator.CurrentVoiceEntries.length > 0) {
+            if (this.cursor.Iterator.CurrentVoiceEntries) {
                 const cursorVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries[0];
                 const baseNote: Note = cursorVoiceEntry.Notes[0];
                 const currentNoteLength: number = baseNote.Length.RealValue;
         
                 this.currentNoteDuration = (currentNoteLength * 4) / (2);
         
-                // console.log(baseNote.Pitch ? baseNote.Pitch.ToString() : "No Note");
-                // console.log("MIDI ID:", baseNote.halfTone);
-                // console.log("Note duration in time:", noteDuration);
-                // console.log(
-                //   "Note timestamp in song",
-                //   ((timestamp - currentNoteLength) / 1000).toPrecision(4) + "s"
-                // );
+                console.log(baseNote.Pitch ? baseNote.Pitch.ToString() : "No Note");
+                console.log("MIDI ID:", baseNote.halfTone);
+                console.log("Note duration in time:", this.currentNoteDuration);
+                console.log(
+                  "Note timestamp in song",
+                  ((timestamp - currentNoteLength) / 1000).toPrecision(4) + "s"
+                );
         
                 this.currentNoteTimeStamp = timestamp;
             }
