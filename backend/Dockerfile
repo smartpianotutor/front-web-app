@@ -23,4 +23,7 @@ ENV FLASK_APP=pianotutor
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG 1
 
+COPY pianotutor /backend/pianotutor
+RUN flask init-db
+
 CMD ["python3", "-m", "flask", "run", "-h", "0.0.0.0"]
