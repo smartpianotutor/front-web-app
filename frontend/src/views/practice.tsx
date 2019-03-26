@@ -19,7 +19,7 @@ class Practice extends Component {
   osmd: OpenSheetMusicDisplay = null;
 
   componentDidMount() {
-    alert("Press ok so we can initialize midi thanks");
+    alert("YAY YOU SIGNED IN, now press ok so we can initialize midi thanks");
     this.context = new AudioContext();
   
     if (navigator.requestMIDIAccess) {

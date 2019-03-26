@@ -14,6 +14,8 @@ import './login.css';
 interface LoginProps {
     onSignIn: any;
     onRegister: any;
+    regError: string;
+    loginError: string;
 }
 
 class Login extends Component<LoginProps> {
@@ -100,9 +102,9 @@ class Login extends Component<LoginProps> {
                     onChange={(e) => { this.handleUserInput(e, 'password') }}
                 />
               </FormControl>
-              {this.state.loginError ? (
+              {this.state.loginError || this.props.loginError ? (
                 <Typography color="error" className="err" >
-                  {this.state.loginError}
+                  {this.state.loginError ? this.state.loginError : this.props.loginError}
                 </Typography>
               ) : null}
               <div className="submit">
@@ -149,9 +151,9 @@ class Login extends Component<LoginProps> {
                     onChange={(e) => { this.handleUserInput(e, 'confirmPassword') }}
                 />
               </FormControl>
-              {this.state.regError ? (
+              {this.state.regError || this.props.regError ? (
                 <Typography color="error" className="err" >
-                  {this.state.regError}
+                  {this.state.regError ? this.state.regError : this.props.regError}
                 </Typography>
               ) : null}
               <div className="submit">
