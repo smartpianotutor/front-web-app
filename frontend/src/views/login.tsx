@@ -110,7 +110,7 @@ class Login extends Component<LoginProps> {
               </FormControl>
               <div className="submit">
                 <Button
-                  onClick={() => {this.props.onRegister(this.state.username, this.state.password)}}
+                  onClick={() => {this.props.onRegister(this.state.newUsername, this.state.newPassword)}}
                   fullWidth
                   variant="contained"
                   color="primary"
