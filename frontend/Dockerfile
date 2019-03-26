@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY package.json /app
 COPY yarn.lock /app
+
 RUN yarn install
 
 EXPOSE 8080
-CMD [ "npm", "run", "start:dev"]
+CMD [ "yarn", "start"]

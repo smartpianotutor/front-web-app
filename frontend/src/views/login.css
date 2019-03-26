@@ -1,0 +1,38 @@
+.Login {
+    text-align: center;
+    width: auto;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    background-color: #364352;
+  }
+  
+  .header {
+    color: #ffffff !important;
+  }
+  
+  .paper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px;
+    padding-top: 8px;
+    min-width: 500px;
+  }
+  
+  .form {
+    margin-top: 16px;
+    width: 100%;
+  }
+  
+  .submit {
+    margin-top: 32px;
+  }
+
+  .err {
+    margin-top: 14px !important;
+    font-size: 1rem !important;
+  }
+  
