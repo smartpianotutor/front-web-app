@@ -114,6 +114,7 @@ def even_division_g():
 def get_sheet_music():
     """Create a new post for the current user."""
     db = get_db()
+    s = stream.Stream()
     # TODO get real ability from DB
     pattern_list = ability_to_pattern[0]
     pattern_func = random.SystemRandom().choice(pattern_list)
