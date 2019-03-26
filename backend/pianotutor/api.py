@@ -110,7 +110,7 @@ def even_division_g():
     return [n1,n2,n3]
 
 @bp.route('/get_sheet_music', methods=('GET',))
-#@login_required
+@login_required
 def get_sheet_music():
     """Create a new post for the current user."""
     db = get_db()

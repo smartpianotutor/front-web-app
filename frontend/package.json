@@ -15,7 +15,8 @@
     "react": "^16.8.5",
     "react-dom": "^16.8.5",
     "react-scripts": "2.1.8",
-    "typescript": "^3.3.4000"
+    "typescript": "^3.3.4000",
+    "universal-cookie": "^3.1.0"
   },
   "scripts": {
     "start": "PORT=8080 react-scripts start",
