@@ -8,6 +8,7 @@ services:
       - 5000:5000
     volumes:
       - ./backend/pianotutor:/backend/pianotutor
+      - ./backend/instance
   frontend:
     build:
       context: ./frontend/
