@@ -59,7 +59,7 @@ def register():
     # Store in database
     db.execute(
         'INSERT INTO User (username, password_sha256) VALUES (?, ?)',
-        (username, hashlib.sha256(password).hexdigest())
+        (username, hashlib.sha256(password.encode('utf-8')).hexdigest())
     )
     db.commit()
     return jsonify({'error': None})
@@ -70,7 +70,7 @@ def login():
     """Log in a registered user by adding the user id to the session."""
     username = request.form['username']
     password = request.form['password']
-    password_sha256 = hashlib.sha256(password).hexdigest()
+    password_sha256 = hashlib.sha256(password.encode('utf-8')).hexdigest()
 
     db = get_db()
     user = db.execute(
@@ -84,7 +84,7 @@ def login():
 
     # store the user id in a new session
     session.clear()
-    session['user_id'] = user['id']
+    session['user_id'] = user['user_id']
     return jsonify({'error': None})
 
 
