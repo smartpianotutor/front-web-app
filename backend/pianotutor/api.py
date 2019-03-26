@@ -11,7 +11,7 @@ bp = Blueprint('api', __name__, url_prefix='/api')
 
 
 @bp.route('/get_sheet_music', methods=('GET',))
-@login_required
+#@login_required
 def get_sheet_music():
     """Create a new post for the current user."""
     db = get_db()

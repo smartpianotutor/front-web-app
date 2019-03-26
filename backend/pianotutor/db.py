@@ -11,6 +11,7 @@ def get_db():
     again.
     """
     if 'db' not in g:
+        print(current_app.config['DATABASE'])
         g.db = sqlite3.connect(
             current_app.config['DATABASE'],
             detect_types=sqlite3.PARSE_DECLTYPES
@@ -36,6 +37,7 @@ def init_db():
 
     with current_app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
+    db.commit()
 
 
 @click.command('init-db')
