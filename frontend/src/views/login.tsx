@@ -24,12 +24,48 @@ class Login extends Component<LoginProps> {
     password: '',
     newUsername: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    regError: '',
+    loginError: ''
   };
 
   handleChange = (event: any, value: number) => {
     this.setState({ value });
   };
+
+  handleRegistration = () => {
+    if (this.state.newUsername == '') {
+      this.setState({regError: "Username cannot be empty."})
+    } else if (this.state.newUsername.length < 3) {
+      this.setState({loginError: "Your username must be at least 3 characters long."})
+    } else if (this.state.newPassword == '') {
+      this.setState({regError: "Password cannot be empty."})
+    } else if (this.state.newPassword.length < 3) {
+      this.setState({loginError: "Your password must be at least 3 characters long."})
+    } else if (this.state.newPassword != this.state.confirmPassword) {
+      this.setState({regError: "Your passwords do not match, please try again."})
+    } else {
+      this.props.onRegister(this.state.newUsername, this.state.newPassword);
+    }
+  }
+
+  handleSignIn = () => {
+    if (this.state.username == '') {
+      this.setState({loginError: "Username cannot be empty."})
+    } else if (this.state.password == '') {
+      this.setState({loginError: "Password cannot be empty."})
+    } else {
+      this.props.onSignIn(this.state.username, this.state.password);
+    }
+  }
+
+  handleUserInput = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>, field: string) => {
+    this.setState({
+      [field]: e.target.value,
+      regError: '',
+      loginError: ''
+    });
+  }
 
   render() {
     const { value } = this.state;
@@ -51,7 +87,7 @@ class Login extends Component<LoginProps> {
                     autoComplete="username"
                     autoFocus 
                     value={this.state.username}
-                    onChange={(e) => { this.setState({ username: e.target.value }) }}
+                    onChange={(e) => { this.handleUserInput(e, 'username') }}
                 />
               </FormControl>
               <FormControl margin="normal" required fullWidth>
@@ -61,12 +97,17 @@ class Login extends Component<LoginProps> {
                     autoComplete="password"
                     autoFocus 
                     value={this.state.password}
-                    onChange={(e) => { this.setState({ password: e.target.value }) }}
+                    onChange={(e) => { this.handleUserInput(e, 'password') }}
                 />
               </FormControl>
+              {this.state.loginError ? (
+                <Typography color="error" className="err" >
+                  {this.state.loginError}
+                </Typography>
+              ) : null}
               <div className="submit">
                 <Button
-                  onClick={() => {this.props.onSignIn(this.state.username, this.state.password)}}
+                  onClick={this.handleSignIn}
                   fullWidth
                   variant="contained"
                   color="primary"
@@ -85,7 +126,7 @@ class Login extends Component<LoginProps> {
                     autoComplete="username"
                     autoFocus 
                     value={this.state.newUsername}
-                    onChange={(e) => { this.setState({ newUsername: e.target.value }) }}
+                    onChange={(e) => { this.handleUserInput(e, 'newUsername') }}
                 />
               </FormControl>
               <FormControl margin="normal" required fullWidth>
@@ -95,7 +136,7 @@ class Login extends Component<LoginProps> {
                     autoComplete="password"
                     autoFocus 
                     value={this.state.newPassword}
-                    onChange={(e) => { this.setState({ newPassword: e.target.value }) }}
+                    onChange={(e) => { this.handleUserInput(e, 'newPassword') }}
                 />
               </FormControl>
               <FormControl margin="normal" required fullWidth>
@@ -105,12 +146,17 @@ class Login extends Component<LoginProps> {
                     autoComplete="password"
                     autoFocus 
                     value={this.state.confirmPassword}
-                    onChange={(e) => { this.setState({ confirmPassword: e.target.value }) }}
+                    onChange={(e) => { this.handleUserInput(e, 'confirmPassword') }}
                 />
               </FormControl>
+              {this.state.regError ? (
+                <Typography color="error" className="err" >
+                  {this.state.regError}
+                </Typography>
+              ) : null}
               <div className="submit">
                 <Button
-                  onClick={() => {this.props.onRegister(this.state.newUsername, this.state.newPassword)}}
+                  onClick={this.handleRegistration}
                   fullWidth
                   variant="contained"
                   color="primary"
