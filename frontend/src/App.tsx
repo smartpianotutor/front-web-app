@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Cookies from 'universal-cookie';
 
 import Login from './views/login';
 import Practice from './views/practice';
@@ -7,8 +8,11 @@ import { register, signIn } from './utils/api';
 
 class App extends Component {
 
+  Cookies = new Cookies();
+
   state = {
     loggedIn: false,
+    sessionId: '',
     userName: '',
     regError: '',
     loginError: ''
@@ -18,7 +22,7 @@ class App extends Component {
     signIn(userName, password)
       .then((response) => {
         if (!response.data.error) {
-          this.setState({loggedIn: true, userName: userName});
+          this.setState({userName: userName, loggedIn: true, sessionId: this.Cookies.get('session')});
         } else {
           this.setState({loginError: response.data.error});
         }
@@ -32,7 +36,7 @@ class App extends Component {
     register(userName, password)
       .then((response) => {
         if (!response.data.error) {
-          this.setState({loggedIn: true, userName: userName});
+          this.setState({userName: userName, loggedIn: true, sessionId: this.Cookies.get('session')});
         } else {
           this.setState({regError: response.data.error});
         }
@@ -43,8 +47,9 @@ class App extends Component {
   }
 
   componentDidMount() {
+    const sessionId: string = this.Cookies.get('session');
+    this.setState({ sessionId: sessionId, loggedIn: sessionId ? true : false });
   }
-
 
   render() {
     return (
