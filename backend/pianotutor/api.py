@@ -11,13 +11,24 @@ from pianotutor.db import get_db
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 ability_to_pattern = {
-    0: ['even_division_f()', 'whole_beat_a()'],
-    1: ['even_division_b()', 'whole_beat_c()', 'even_division_a()'],
-    2: ['even_division_d()', 'even_division_c()'],
-    3: ['even_division_g()', 'whole_beat_b()'],
-    4: ['whole_beat_d()'],
-    5: ['even_division_e()', 'multi_beat_a()'],
-    6: ['multi_beat_b()']
+    0: ['even_division_f()', 'whole_beat_a()', 'even_division_b()'],
+    1: ['whole_beat_c()', 'even_division_a()', 'even_uneven_division_a()'],
+    2: ['even_uneven_division_f()'],
+    3: ['even_division_d()', 'even_uneven_division_e()', 'uneven_division_a()', 'even_uneven_division_d()', 'even_division_c()', 'even_uneven_division_c()'],
+    4: ['even_uneven_division_b()','even_division_g()', 'whole_beat_b()', 'uneven_division_c()'],
+    5: ['uneven_division_b()', 'uneven_uneven_division_a()', 'whole_beat_d()'],
+    6: ['even_division_e()', 'multi_beat_a()', 'uneven_division_d()'],
+    7: ['multi_beat_b()', 'uneven_uneven_division_b()']
+}
+
+fake_note_ability_data = {
+    'a': 0,
+    'b': 0,
+    'c': 0,
+    'd': 1,
+    'e': 1,
+    'f': 1,
+    'g': 0
 }
 
 def whole_beat_a():
@@ -233,14 +244,33 @@ def uneven_uneven_division_b():
 def get_sheet_music():
     """Create a new post for the current user."""
     db = get_db()
+    #TODO: make tempo slower
     s = stream.Stream()
-    # TODO get real ability from DB
-    pattern_list = ability_to_pattern[0]
-    pattern_func = random.SystemRandom().choice(pattern_list)
-    # TODO transpose pattern to desired note
-    pattern = eval(pattern_func)
-    s.append(pattern)
-    # TODO finish measures alternatively (hard, easy)
+
+    #find the focus note
+    first_min = min(fake_note_ability_data, key=fake_note_ability_data.get)
+    focus_note_list = [key for key in fake_note_ability_data.keys() if fake_note_ability_data[key]==fake_note_ability_data[first_min]]
+    focus_note = random.SystemRandom().choice(focus_note_list)
+
+    #find the passive note pool
+    first_max = max(fake_note_ability_data, key=fake_note_ability_data.get)
+    passive_note_list = [key for key in fake_note_ability_data.keys() if fake_note_ability_data[key]==fake_note_ability_data[first_max]]
+    if focus_note in passive_note_list: passive_note_list.remove(focus_note)
+
+    while(s.duration.quarterLength < 16):
+        # add focus note
+        focus_pattern_list = ability_to_pattern[fake_note_ability_data[focus_note]]
+        focus_pattern_func = random.SystemRandom().choice(focus_pattern_list)
+        focus_pattern = eval(focus_pattern_func)
+        s.append(focus_pattern)
+
+        # add passive note
+        passive_note = random.SystemRandom().choice(passive_note_list)
+        passive_pattern_list = ability_to_pattern[fake_note_ability_data[passive_note]]
+        passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
+        passive_pattern = eval(passive_pattern_func)
+        s.append(passive_pattern)
+
     GEX = musicxml.m21ToXml.GeneralObjectExporter(s)
     out = GEX.parse()
     outStr = out.decode('utf-8').strip()
