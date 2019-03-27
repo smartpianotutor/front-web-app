@@ -1,14 +1,32 @@
 import React, { Component } from 'react';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
 
 import OpenSheetMusicDisplay from './../utils/OpenSheetMusicDisplay';
 
 import './practice.css';
 
-class Practice extends Component {
+enum PracticePageStatus {
+  Welcome,
+  ConnectingMIDI,
+  MIDIFailed,
+  NoMIDI,
+  Ready,
+  Practicing,
+  Finished
+}
+
+interface PracticeProps {
+  username: string,
+  onSignOut: any
+}
+
+class Practice extends Component<PracticeProps> {
 
   state = {
-    value: 0,
+    status: PracticePageStatus.Welcome,
   };
 
   context: AudioContext = null;
@@ -19,7 +37,11 @@ class Practice extends Component {
   osmd: OpenSheetMusicDisplay = null;
 
   componentDidMount() {
-    alert("YAY YOU SIGNED IN, now press ok so we can initialize midi thanks");
+
+  }
+
+  setUpMIDIAccess = () => {
+    this.setState({ status: PracticePageStatus.ConnectingMIDI });
     this.context = new AudioContext();
   
     if (navigator.requestMIDIAccess) {
@@ -38,11 +60,8 @@ class Practice extends Component {
     this.envelope.gain.value = 0.0; // Mute the sound
     this.oscillator.start(0); // Go ahead and start up the oscillator
 
+    this.setState({ status: PracticePageStatus.Ready })
   }
-
-  handleChange = (event: any, value: number) => {
-    this.setState({ value });
-  };
 
   // MIDI system has been started
   onMidiInit = (midi: WebMidi.MIDIAccess) => {
@@ -53,7 +72,8 @@ class Practice extends Component {
 
   // MIDI failed to start
   onMidiReject = (err: any) => {
-    alert("The MIDI system failed to start.  You're gonna have a bad time.");
+    console.log(err);
+    this.setState({ status: PracticePageStatus.MIDIFailed })
   };
     
   //Look for MIDI inputs
@@ -65,7 +85,8 @@ class Practice extends Component {
       haveAtLeastOneDevice = true;
     }
     if (!haveAtLeastOneDevice) {
-      alert("Connect a MIDI input and refresh!");
+      console.log("Connect a MIDI input and refresh!");
+      this.setState({ status: PracticePageStatus.NoMIDI })
     }
   }
 
@@ -87,6 +108,11 @@ class Practice extends Component {
   }
 
   noteOn = (noteNum: number) => {
+
+    if (this.state.status === PracticePageStatus.Ready) {
+      this.setState({ status: PracticePageStatus.Practicing })
+    }
+
     console.log("NOTE ON:", noteNum);
     this.oscillator.frequency.cancelScheduledValues(0);
     this.oscillator.frequency.setTargetAtTime( 250 * Math.pow(2,(noteNum-69)/12), 0, 0.05 );
@@ -100,14 +126,59 @@ class Practice extends Component {
     this.envelope.gain.setTargetAtTime(0.0, 0, 0.05);
   }
 
-  render() {
-    const { value } = this.state;
+  renderPage = () => {
+    switch(this.state.status) {
+      case PracticePageStatus.Welcome: return (
+        <div className="Welcome">
+          <Typography variant="h2" gutterBottom>Welcome, {this.props.username}</Typography>
+          <Button color="primary" variant="contained" onClick={this.setUpMIDIAccess}>
+            Click Here to Start MIDI Initialization
+          </Button>
+        </div>
+      )
+      case PracticePageStatus.ConnectingMIDI: return (
+        <div className="Welcome">
+          <Typography variant="h2">Initializing Audio Context..</Typography>
+        </div>
+      )
+      case PracticePageStatus.MIDIFailed: return (
+        <div className="Welcome">
+          <Typography variant="h2">Unable to initialize Audio Context, please refresh.</Typography>
+        </div>
+      )
+      case PracticePageStatus.NoMIDI: return (
+        <div className="Welcome">
+          <Typography variant="h2">No MIDI devices detected, please connect a device and try again.</Typography>
+        </div>
+      )
+      case PracticePageStatus.Practicing:
+      case PracticePageStatus.Ready: return (
+        <div className="Practice">
+          {this.state.status === PracticePageStatus.Ready ? (
+            <div className="Practice-Text">
+              <Typography variant="h2" color="textPrimary">Press any key on your MIDI device to begin</Typography>
+            </div> ) : null
+          }
+          <OpenSheetMusicDisplay start={this.state.status === PracticePageStatus.Practicing} />
+        </div>
+      )
+    }
+  }
 
+  render() {
     return (
-      <div className="Practice">
-        <OpenSheetMusicDisplay file={"SampleMusic.xml"} />
+      <div>
+        <AppBar position="absolute" style={{ backgroundColor: '#364352'}}>
+          <Toolbar>
+          <Typography variant="h6" style={{flexGrow: 1, color: '#fff'}}>
+            Smart Piano Tutor
+          </Typography>
+            <Button style={{color: '#fff'}} variant="outlined" onClick={this.props.onSignOut}> Sign Out </Button>
+          </Toolbar>
+        </AppBar>
+        {this.renderPage()}
       </div>
-    );
+    )
   }
 }
 
