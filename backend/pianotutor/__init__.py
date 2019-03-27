@@ -26,6 +26,9 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # allow REACT/JS to read session cookie
+    app.config['SESSION_COOKIE_HTTPONLY'] = False
+
     @app.route('/hello')
     def hello():
         return 'Hello, World!'

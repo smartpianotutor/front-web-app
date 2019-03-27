@@ -12,6 +12,7 @@ class App extends Component {
 
   state = {
     loggedIn: false,
+    sessionId: '',
     userName: '',
     regError: '',
     loginError: ''
@@ -21,8 +22,7 @@ class App extends Component {
     signIn(userName, password)
       .then((response) => {
         if (!response.data.error) {
-          this.Cookies.set('loggedIn', true, { expires: new Date(new Date().getTime() + 60 * 60000) })
-          this.setState({loggedIn: true, userName: userName});
+          this.setState({userName: userName, loggedIn: true, sessionId: this.Cookies.get('session')});
         } else {
           this.setState({loginError: response.data.error});
         }
@@ -36,8 +36,7 @@ class App extends Component {
     register(userName, password)
       .then((response) => {
         if (!response.data.error) {
-          this.Cookies.set('loggedIn', true, { expires: new Date(new Date().getTime() + 60 * 60000) })
-          this.setState({loggedIn: true, userName: userName});
+          this.setState({userName: userName, loggedIn: true, sessionId: this.Cookies.get('session')});
         } else {
           this.setState({regError: response.data.error});
         }
@@ -48,7 +47,8 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.setState({ loggedIn: this.Cookies.get('loggedIn') });
+    const sessionId: string = this.Cookies.get('session');
+    this.setState({ sessionId: sessionId, loggedIn: sessionId ? true : false });
   }
 
   render() {
