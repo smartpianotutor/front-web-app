@@ -20,7 +20,6 @@ ability_to_pattern = {
     6: ['multi_beat_b()']
 }
 
-# TODO finish patterns
 def whole_beat_a():
     return note.Note('C4', quarterLength=1)
 
@@ -46,9 +45,9 @@ def multi_beat_b():
 
 def even_division_a():
     n1 = note.Note('C4', type='eighth')
-    n1.beams.fill(2, 'start')
+    n1.beams.fill(1, 'start')
     n2 = note.Note('C4', type='eighth')
-    n2.beams.fill(2, 'stop')
+    n2.beams.fill(1, 'stop')
     return [n1,n2]
 
 def even_division_b():
@@ -107,6 +106,126 @@ def even_division_g():
     n2.beams.fill(1, 'continue')
     n3 = note.Note('A3', type='eighth')
     n3.beams.fill(1, 'stop')
+    return [n1,n2,n3]
+
+def even_uneven_division_a():
+    n1 = note.Note('C4', type='eighth')
+    n1.beams.append('start')
+    n2 = note.Note('C4', type='16th')
+    n2.beams.append('continue')
+    n2.beams.append('start')
+    n3 = note.Note('C4', type='16th')
+    n3.beams.append('stop')
+    n3.beams.append('stop')
+    return [n1,n2,n3]
+
+def even_uneven_division_b():
+    n1 = note.Note('C4', type='16th')
+    n1.beams.append('start')
+    n1.beams.append('start')
+    n2 = note.Note('C4', type='16th')
+    n2.beams.append('continue')
+    n2.beams.append('stop')
+    n3 = note.Note('C4', type='eighth')
+    n3.beams.append('stop')
+    return [n1,n2, n3]
+
+def even_uneven_division_c():
+    n1 = note.Note('C4', type='eighth')
+    n1.beams.append('start')
+    n2 = note.Note('B3', type='16th')
+    n2.beams.append('continue')
+    n2.beams.append('start')
+    n3 = note.Note('B3', type='16th')
+    n3.beams.append('stop')
+    n3.beams.append('stop')
+    return [n1,n2,n3]
+
+def even_uneven_division_d():
+    n1 = note.Note('C4', type='16th')
+    n1.beams.append('start')
+    n1.beams.append('start')
+    n2 = note.Note('C4', type='16th')
+    n2.beams.append('continue')
+    n2.beams.append('stop')
+    n3 = note.Note('B3', type='eighth')
+    n3.beams.append('stop')
+    return [n1,n2,n3]
+
+def even_uneven_division_e():
+    n1 = note.Note('C4', type='eighth')
+    n1.beams.append('start')
+    n2 = note.Note('D4', type='16th')
+    n2.beams.append('continue')
+    n2.beams.append('start')
+    n3 = note.Note('E4', type='16th')
+    n3.beams.append('stop')
+    n3.beams.append('stop')
+    return [n1,n2,n3]
+
+def even_uneven_division_f():
+    n1 = note.Note('C4', type='16th')
+    n1.beams.append('start')
+    n1.beams.append('start')
+    n2 = note.Note('D4', type='16th')
+    n2.beams.append('continue')
+    n2.beams.append('stop')
+    n3 = note.Note('E4', type='eighth')
+    n3.beams.append('stop')
+    return [n1,n2,n3]
+
+def uneven_division_a():
+    n1 = note.Note('C4', quarterLength=0.75)
+    n1.beams.append('start')
+    n2 = note.Note('C4', type='16th')
+    n2.beams.append('stop')
+    n2.beams.append('partial', 'left')
+    return [n1,n2]
+
+def uneven_division_b():
+    n1 = note.Note('C4', type='16th')
+    n1.beams.append('start')
+    n1.beams.append('partial', 'right')
+    n2 = note.Note('C4', quarterLength=0.75)
+    n2.beams.append('stop')
+    return [n1,n2]
+
+def uneven_division_c():
+    n1 = note.Note('C4', quarterLength=0.75)
+    n1.beams.append('start')
+    n2 = note.Note('D4', type='16th')
+    n2.beams.append('stop')
+    n2.beams.append('partial', 'left')
+    return [n1,n2]
+
+def uneven_division_d():
+    n1 = note.Note('C4', type='16th')
+    n1.beams.append('start')
+    n1.beams.append('partial', 'right')
+    n2 = note.Note('D4', quarterLength=0.75)
+    n2.beams.append('stop')
+    return [n1,n2]
+
+def uneven_uneven_division_a():
+    n1 = note.Note('C4', type='16th')
+    n1.beams.append('start')
+    n1.beams.append('partial', 'right')
+    n2 = note.Note('C4', type='eighth')
+    n2.beams.append('continue')
+    n3 = note.Note('C4', type='16th')
+    n3.beams.append('stop')
+    n3.beams.append('partial', 'left')
+    return [n1,n2,n3]
+
+def uneven_uneven_division_b():
+    n1 = note.Note('C4', type='16th')
+    n1.beams.append('start')
+    n1.beams.append('partial', 'right')
+    n2 = note.Note('D4', type='eighth')
+    n2.beams.append('continue')
+    n3 = note.Note('E4', type='16th')
+    n3.beams.append('stop')
+    n3.beams.append('partial', 'left')
     return [n1,n2,n3]
 
 @bp.route('/get_sheet_music', methods=('GET',))
