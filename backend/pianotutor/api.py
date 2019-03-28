@@ -25,14 +25,16 @@ ability_to_pattern = {
 }
 
 fake_note_ability_data = {
-    'a': 0,
-    'b': 0,
-    'c': 0,
-    'd': 1,
-    'e': 1,
-    'f': 1,
-    'g': 0
+    60: 0,
+    62: 0,
+    64: 0,
+    65: 0,
+    67: 0,
+    69: 0,
+    71: 0
 }
+
+midi_to_note = collections.OrderedDict([(55, 'G3'), (57, 'A3'), (59, 'B3'), (60, 'C4'), (62, 'D4'), (64, 'E4'), (65, 'F4'), (67, 'G4'), (69, 'A4'), (71, 'B4'), (72, 'C5'), (74, 'D5'), (76, 'E5')])
 
 def whole_beat_a():
     return note.Note('C4', quarterLength=1)
