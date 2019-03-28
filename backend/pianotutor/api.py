@@ -10,6 +10,9 @@ from pianotutor.db import get_db
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
+NUM_BARS = 4
+NUM_QUARTERS_IN_BAR = 4
+
 ability_to_pattern = {
     0: ['even_division_f()', 'whole_beat_a()', 'even_division_b()'],
     1: ['whole_beat_c()', 'even_division_a()', 'even_uneven_division_a()'],
@@ -244,7 +247,6 @@ def uneven_uneven_division_b():
 def get_sheet_music():
     """Create a new post for the current user."""
     db = get_db()
-    #TODO: make tempo slower
     s = stream.Stream()
 
     #find the focus note
@@ -257,7 +259,7 @@ def get_sheet_music():
     passive_note_list = [key for key in fake_note_ability_data.keys() if fake_note_ability_data[key]==fake_note_ability_data[first_max]]
     if focus_note in passive_note_list: passive_note_list.remove(focus_note)
 
-    while(s.duration.quarterLength < 16):
+    while(s.duration.quarterLength < (NUM_BARS * NUM_QUARTERS_IN_BAR)):
         # add focus note
         focus_pattern_list = ability_to_pattern[fake_note_ability_data[focus_note]]
         focus_pattern_func = random.SystemRandom().choice(focus_pattern_list)
