@@ -312,6 +312,9 @@ def get_sheet_music():
         passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
         passive_pattern = eval(passive_pattern_func)(passive_note)
         s.append(passive_pattern)
+    
+    while(s.quarterLength > (NUM_BARS * NUM_QUARTERS_IN_BAR)):
+    s.pop(len(s) - 1)
 
     GEX = musicxml.m21ToXml.GeneralObjectExporter(s)
     out = GEX.parse()
