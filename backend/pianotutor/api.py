@@ -3,6 +3,7 @@ from flask import (
 )
 from music21 import *
 import random
+import collections
 
 from pianotutor.auth import login_required
 from pianotutor.db import get_db
