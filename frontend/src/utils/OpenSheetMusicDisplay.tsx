@@ -2,8 +2,6 @@ import React, { Component, RefObject } from 'react';
 import { OpenSheetMusicDisplay as OSMD, Cursor, VoiceEntry, Note } from 'opensheetmusicdisplay';
 
 interface OpenSheetMusicDisplayProps {
-    autoResize?: boolean,
-    drawTitle?: boolean,
     start: boolean
 }
 
@@ -29,8 +27,11 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
   
     setupOsmd() {
       const options = {
-        autoResize: this.props.autoResize ? this.props.autoResize : true,
-        drawTitle: this.props.drawTitle ? this.props.drawTitle : true,
+        autoResize: true,
+        drawCredits: false,
+        drawPartNames: false,
+        drawFingerings: false,
+        coloringEnabled: true
       }
       this.osmd = new OSMD(this.divRef.current, options);
       this.cursor = this.osmd.cursor;
@@ -49,25 +50,34 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
 
         if (timeSinceLastNote >= this.currentNoteDuration * 1000) {
 
-            if (this.currentNoteDuration) this.cursor.next();
-
-            if (this.cursor.Iterator.CurrentVoiceEntries) {
-                const cursorVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries[0];
-                const baseNote: Note = cursorVoiceEntry.Notes[0];
-                const currentNoteLength: number = baseNote.Length.RealValue;
-        
-                this.currentNoteDuration = (currentNoteLength * 4) / (2);
-
-                const noteData = {
-                  midiId: baseNote.halfTone,
-                  noteDuration: this.currentNoteDuration,
-                  noteTimestamp: ((timestamp - currentNoteLength) / 1000).toPrecision(4) + "s"
-                }
-
-                console.log(noteData);
-        
-                this.currentNoteTimeStamp = timestamp;
+          if (this.currentNoteDuration) {
+            const prevVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries ? this.cursor.Iterator.CurrentVoiceEntries[0] : null;
+            if (prevVoiceEntry) {
+              prevVoiceEntry.StemColor = "#FF0000";
+              prevVoiceEntry.Notes[0].NoteheadColor = "#FF0000";
+              this.osmd.render();
             }
+            this.cursor.next();
+          }
+
+          if (this.cursor.Iterator.CurrentVoiceEntries) {
+              const cursorVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries[0];
+              const baseNote: Note = cursorVoiceEntry.Notes[0];
+              const currentNoteLength: number = baseNote.Length.RealValue;
+      
+              this.currentNoteDuration = (currentNoteLength * 4) / (1.4);
+
+              const noteData = {
+                midiId: baseNote.halfTone,
+                noteDuration: this.currentNoteDuration,
+                noteLength: currentNoteLength,
+                noteTimestamp: ((this.currentNoteTimeStamp - this.currentSheetMusicStartTime) / 1000).toPrecision(4) + "s"
+              }
+
+              console.log(noteData);
+      
+              this.currentNoteTimeStamp = timestamp;
+          }
         }
         window.requestAnimationFrame(this.update);
       }
@@ -87,7 +97,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     }
   
     render() {
-      return (<div style={{width: '100vw'}} ref={this.divRef} />);
+      return (<div style={{marginTop: '10vh'}} ref={this.divRef} />);
     }
   }
 
