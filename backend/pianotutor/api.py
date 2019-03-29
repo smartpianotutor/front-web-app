@@ -299,6 +299,9 @@ def get_sheet_music():
     passive_note_list = [key for key in fake_note_ability_data.keys() if fake_note_ability_data[key]==fake_note_ability_data[first_max]]
     if focus_note in passive_note_list: passive_note_list.remove(focus_note)
 
+    # add initial half focus note
+    s.append(note.Note(midi_to_note[focus_note], quarterLength=2))
+    
     while(s.duration.quarterLength < (NUM_BARS * NUM_QUARTERS_IN_BAR)):
         # add focus note
         focus_pattern_list = ability_to_pattern[fake_note_ability_data[focus_note]]
