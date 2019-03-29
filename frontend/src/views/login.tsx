@@ -97,6 +97,7 @@ class Login extends Component<LoginProps> {
                 <Input 
                     id="password"
                     autoComplete="password"
+                    type="password"
                     autoFocus 
                     value={this.state.password}
                     onChange={(e) => { this.handleUserInput(e, 'password') }}
@@ -136,6 +137,7 @@ class Login extends Component<LoginProps> {
                 <Input 
                     id="password"
                     autoComplete="password"
+                    type="password"
                     autoFocus 
                     value={this.state.newPassword}
                     onChange={(e) => { this.handleUserInput(e, 'newPassword') }}
@@ -146,6 +148,7 @@ class Login extends Component<LoginProps> {
                 <Input 
                     id="password"
                     autoComplete="password"
+                    type="password"
                     autoFocus 
                     value={this.state.confirmPassword}
                     onChange={(e) => { this.handleUserInput(e, 'confirmPassword') }}
