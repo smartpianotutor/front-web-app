@@ -317,7 +317,7 @@ def get_sheet_music():
         s.append(passive_pattern)
     
     while(s.quarterLength > (NUM_BARS * NUM_QUARTERS_IN_BAR)):
-    s.pop(len(s) - 1)
+        s.pop(len(s) - 1)
 
     GEX = musicxml.m21ToXml.GeneralObjectExporter(s)
     out = GEX.parse()
