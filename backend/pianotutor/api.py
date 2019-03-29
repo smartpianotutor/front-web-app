@@ -14,14 +14,14 @@ NUM_BARS = 4
 NUM_QUARTERS_IN_BAR = 4
 
 ability_to_pattern = {
-    0: ['even_division_f()', 'whole_beat_a()', 'even_division_b()'],
-    1: ['whole_beat_c()', 'even_division_a()', 'even_uneven_division_a()'],
-    2: ['even_uneven_division_f()'],
-    3: ['even_division_d()', 'even_uneven_division_e()', 'uneven_division_a()', 'even_uneven_division_d()', 'even_division_c()', 'even_uneven_division_c()'],
-    4: ['even_uneven_division_b()','even_division_g()', 'whole_beat_b()', 'uneven_division_c()'],
-    5: ['uneven_division_b()', 'uneven_uneven_division_a()', 'whole_beat_d()'],
-    6: ['even_division_e()', 'multi_beat_a()', 'uneven_division_d()'],
-    7: ['multi_beat_b()', 'uneven_uneven_division_b()']
+    0: ['even_division_f', 'whole_beat_a', 'even_division_b'],
+    1: ['whole_beat_c', 'even_division_a', 'even_uneven_division_a'],
+    2: ['even_uneven_division_f'],
+    3: ['even_division_d', 'even_uneven_division_e', 'uneven_division_a', 'even_uneven_division_d', 'even_division_c', 'even_uneven_division_c'],
+    4: ['even_uneven_division_b','even_division_g', 'whole_beat_b', 'uneven_division_c'],
+    5: ['uneven_division_b', 'uneven_uneven_division_a', 'whole_beat_d'],
+    6: ['even_division_e', 'multi_beat_a', 'uneven_division_d'],
+    7: ['multi_beat_b', 'uneven_uneven_division_b']
 }
 
 fake_note_ability_data = {
