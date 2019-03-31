@@ -5,10 +5,16 @@ from music21 import *
 import random
 import collections
 import sys
+import json
 
 from pianotutor.auth import login_required
 from pianotutor.db import get_db
 
+# todo: set db default abilities = 0
+# todo: use db data
+# todo: add passive note generation to all patterns up to and including the ability
+# todo: verify storage in snippet table
+# todo: force snippet it to the xml title field
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -345,7 +351,8 @@ def uneven_uneven_division_b(base_midi_id):
 def get_sheet_music():
     """Create a new post for the current user."""
     db = get_db()
-    s = stream.Stream()
+    sc = stream.Score()
+    p = stream.Part()
 
     #find the focus note
     first_min = min(fake_note_ability_data, key=fake_note_ability_data.get)
@@ -358,27 +365,37 @@ def get_sheet_music():
     if focus_note in passive_note_list: passive_note_list.remove(focus_note)
 
     # add initial half focus note
-    s.append(whole_beat_c(focus_note))
+    p.append(whole_beat_c(focus_note))
     
-    while(s.duration.quarterLength < (NUM_BARS * NUM_QUARTERS_IN_BAR)):
+    while(p.duration.quarterLength < (NUM_BARS * NUM_QUARTERS_IN_BAR)):
         # add focus note
         focus_pattern_list = ability_to_pattern[fake_note_ability_data[focus_note]]
         focus_pattern_func = random.SystemRandom().choice(focus_pattern_list)
         focus_pattern = eval(focus_pattern_func)(focus_note)
-        s.append(focus_pattern)
+        p.append(focus_pattern)
 
         # add passive note
         passive_note = random.SystemRandom().choice(passive_note_list)
         passive_pattern_list = ability_to_pattern[fake_note_ability_data[passive_note]]
         passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
         passive_pattern = eval(passive_pattern_func)(passive_note)
-        s.append(passive_pattern)
+        p.append(passive_pattern)
     
-    while(s.quarterLength > (NUM_BARS * NUM_QUARTERS_IN_BAR)):
-        s.pop(len(s) - 1)
+    while(p.quarterLength > (NUM_BARS * NUM_QUARTERS_IN_BAR)):
+        p.pop(len(p) - 1)
         note_difficulties.pop(-1)
+    
+    sc.append(p)
+    sc.insert(0, metadata.Metadata())
+    note_difficulties_json = json.dumps(note_difficulties)
+    db.execute(
+       'INSERT INTO Snippet (musicxml) VALUES (?);', (note_difficulties_json, )
+    )
+    snippet_id = db.execute('SELECT snippet_id FROM Snippet ORDER BY snippet_id DESC LIMIT 1;').fetchone()[0]
+    sc.metadata.title = snippet_id
+    db.commit()
 
-    GEX = musicxml.m21ToXml.GeneralObjectExporter(s)
+    GEX = musicxml.m21ToXml.GeneralObjectExporter(sc)
     out = GEX.parse()
     outStr = out.decode('utf-8').strip()
     return Response(outStr, mimetype='text/xml')
