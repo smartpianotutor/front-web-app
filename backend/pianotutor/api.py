@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, Response
+    Blueprint, Response, g
 )
 from music21 import *
 import random
@@ -7,14 +7,11 @@ import collections
 import sys
 import json
 
+from pianotutor.shared import error_response
 from pianotutor.auth import login_required
 from pianotutor.db import get_db
 
-# todo: set db default abilities = 0
-# todo: use db data
-# todo: add passive note generation to all patterns up to and including the ability
-# todo: verify storage in snippet table
-# todo: force snippet it to the xml title field
+#add passive note generation to all patterns up to and including the ability
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -32,15 +29,7 @@ ability_to_pattern = {
     7: ['multi_beat_b', 'uneven_uneven_division_b']
 }
 
-fake_note_ability_data = {
-    60: 0,
-    62: 0,
-    64: 0,
-    65: 0,
-    67: 0,
-    69: 0,
-    71: 0
-}
+note_ability_data = {}
 
 def reverse_ability_lookup(func_name):
     for k,v in ability_to_pattern.items():
@@ -351,17 +340,22 @@ def uneven_uneven_division_b(base_midi_id):
 def get_sheet_music():
     """Create a new post for the current user."""
     db = get_db()
+    user = g.user[0]
+    results = db.execute('SELECT midi_id, ability FROM UserAbility WHERE user_id = ? ;', (user, )).fetchall()
+    for result in results:
+        note_ability_data[result[0]] = result[1]
+
     sc = stream.Score()
     p = stream.Part()
 
     #find the focus note
-    first_min = min(fake_note_ability_data, key=fake_note_ability_data.get)
-    focus_note_list = [key for key in fake_note_ability_data.keys() if fake_note_ability_data[key]==fake_note_ability_data[first_min]]
+    first_min = min(note_ability_data, key=note_ability_data.get)
+    focus_note_list = [key for key in note_ability_data.keys() if note_ability_data[key]==note_ability_data[first_min]]
     focus_note = random.SystemRandom().choice(focus_note_list)
 
     #find the passive note pool
-    first_max = max(fake_note_ability_data, key=fake_note_ability_data.get)
-    passive_note_list = [key for key in fake_note_ability_data.keys() if fake_note_ability_data[key]==fake_note_ability_data[first_max]]
+    first_max = max(note_ability_data, key=note_ability_data.get)
+    passive_note_list = [key for key in note_ability_data.keys() if note_ability_data[key]==note_ability_data[first_max]]
     if focus_note in passive_note_list: passive_note_list.remove(focus_note)
 
     # add initial half focus note
@@ -369,14 +363,16 @@ def get_sheet_music():
     
     while(p.duration.quarterLength < (NUM_BARS * NUM_QUARTERS_IN_BAR)):
         # add focus note
-        focus_pattern_list = ability_to_pattern[fake_note_ability_data[focus_note]]
+        focus_pattern_list = ability_to_pattern[note_ability_data[focus_note]]
         focus_pattern_func = random.SystemRandom().choice(focus_pattern_list)
         focus_pattern = eval(focus_pattern_func)(focus_note)
         p.append(focus_pattern)
 
         # add passive note
         passive_note = random.SystemRandom().choice(passive_note_list)
-        passive_pattern_list = ability_to_pattern[fake_note_ability_data[passive_note]]
+        passive_pattern_list = []
+        for ability in range(0, (note_ability_data[passive_note]+1)):
+            passive_pattern_list.extend(ability_to_pattern[ability])
         passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
         passive_pattern = eval(passive_pattern_func)(passive_note)
         p.append(passive_pattern)
@@ -389,7 +385,7 @@ def get_sheet_music():
     sc.insert(0, metadata.Metadata())
     note_difficulties_json = json.dumps(note_difficulties)
     db.execute(
-       'INSERT INTO Snippet (musicxml) VALUES (?);', (note_difficulties_json, )
+       'INSERT INTO Snippet (note_metadata) VALUES (?);', (note_difficulties_json, )
     )
     snippet_id = db.execute('SELECT snippet_id FROM Snippet ORDER BY snippet_id DESC LIMIT 1;').fetchone()[0]
     sc.metadata.title = snippet_id
