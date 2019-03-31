@@ -11,8 +11,6 @@ from pianotutor.shared import error_response
 from pianotutor.auth import login_required
 from pianotutor.db import get_db
 
-#add passive note generation to all patterns up to and including the ability
-
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 NUM_BARS = 4
@@ -371,6 +369,7 @@ def get_sheet_music():
         # add passive note
         passive_note = random.SystemRandom().choice(passive_note_list)
         passive_pattern_list = []
+        #add passive note generation to all patterns up to and including the ability
         for ability in range(0, (note_ability_data[passive_note]+1)):
             passive_pattern_list.extend(ability_to_pattern[ability])
         passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
