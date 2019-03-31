@@ -146,7 +146,7 @@ class Login extends Component<LoginProps> {
               <FormControl margin="normal" required fullWidth>
                 <InputLabel htmlFor="password">Confirm Password</InputLabel>
                 <Input 
-                    id="password"
+                    id="completePassword"
                     autoComplete="password"
                     type="password"
                     autoFocus 
