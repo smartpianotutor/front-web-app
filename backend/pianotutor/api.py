@@ -415,6 +415,7 @@ def update_abilities():
     db = get_db()
     user = g.user[0]
     snippet_id = int(request.form['snippet_id'])
+    print(request.form["performance"])
     performance = json.loads(request.form['performance'])
 
     res = db.execute("select * from Snippet where snippet_id = ?", (snippet_id,))

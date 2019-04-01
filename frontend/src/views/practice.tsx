@@ -23,10 +23,17 @@ interface PracticeProps {
   onSignOut: any
 }
 
+class MIDIActiveKey {
+  MIDIid: number;
+  Timestamp: number;
+  Length: number;
+}
+
 class Practice extends Component<PracticeProps> {
 
   state = {
     status: PracticePageStatus.Welcome,
+    startTime: 0
   };
 
   context: AudioContext = null;
@@ -35,6 +42,7 @@ class Practice extends Component<PracticeProps> {
   envelope: GainNode = null;
 
   osmd: OpenSheetMusicDisplay = null;
+  activeNotes: MIDIActiveKey[] = [];
 
   componentDidMount() {
 
@@ -110,18 +118,26 @@ class Practice extends Component<PracticeProps> {
   noteOn = (noteNum: number) => {
 
     if (this.state.status === PracticePageStatus.Ready) {
-      this.setState({ status: PracticePageStatus.Practicing })
-    }
+      this.setState({ status: PracticePageStatus.Practicing, startTime: Date.now() });
+      console.log("NOW")
+    } else {
+      const time = ((Date.now() - this.state.startTime) / 1000);
+      this.activeNotes.push({MIDIid: noteNum, Timestamp: time, Length: 0});
 
-    console.log("NOTE ON:", noteNum);
-    this.oscillator.frequency.cancelScheduledValues(0);
-    this.oscillator.frequency.setTargetAtTime( 250 * Math.pow(2,(noteNum-69)/12), 0, 0.05 );
-    this.envelope.gain.cancelScheduledValues(0);
-    this.envelope.gain.setTargetAtTime(1.0, 0, 0.05);
+      console.log("NOTE ON:", noteNum);
+      this.oscillator.frequency.cancelScheduledValues(0);
+      this.oscillator.frequency.setTargetAtTime( 250 * Math.pow(2,(noteNum-69)/12), 0, 0.05 );
+      this.envelope.gain.cancelScheduledValues(0);
+      this.envelope.gain.setTargetAtTime(1.0, 0, 0.05);
+    }
   }
     
   noteOff = (noteNum: number) => {
     console.log("NOTE OFF", noteNum);
+
+    var pressedNote = this.activeNotes.find((n) => n.MIDIid === noteNum && n.Length === 0);
+    if (pressedNote) pressedNote.Length = ((Date.now() - this.state.startTime) / 1000) - pressedNote.Timestamp;
+
     this.envelope.gain.cancelScheduledValues(0);
     this.envelope.gain.setTargetAtTime(0.0, 0, 0.05);
   }
@@ -159,7 +175,7 @@ class Practice extends Component<PracticeProps> {
               <Typography variant="h2" color="textPrimary">Press any key on your MIDI device to begin</Typography>
             </div> ) : null
           }
-          <OpenSheetMusicDisplay start={this.state.status === PracticePageStatus.Practicing} />
+          <OpenSheetMusicDisplay userPressedNotes={this.activeNotes} start={this.state.status === PracticePageStatus.Practicing} />
         </div>
       )
     }

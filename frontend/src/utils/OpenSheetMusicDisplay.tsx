@@ -1,8 +1,17 @@
 import React, { Component, RefObject } from 'react';
 import { OpenSheetMusicDisplay as OSMD, Cursor, VoiceEntry, Note } from 'opensheetmusicdisplay';
 
+import { updateAbilities } from './api';
+
 interface OpenSheetMusicDisplayProps {
-    start: boolean
+    start: boolean,
+    userPressedNotes: MIDIActiveKey[]
+}
+
+class MIDIActiveKey {
+  MIDIid: number;
+  Timestamp: number;
+  Length: number;
 }
 
 class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
@@ -11,9 +20,12 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     cursor: Cursor;
     divRef: RefObject<HTMLDivElement>;
 
-    currentNoteTimeStamp: number = null;
+    currentNoteTimeStamp: number[];
     currentNoteDuration: number = 0;
     currentSheetMusicStartTime: number = 0;
+
+    performance: boolean[] = [];
+    snippetId: number;
 
     state = {
       practicing: false
@@ -38,24 +50,66 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       this.osmd.load('./api/get_sheet_music').then(() => {
         this.osmd.render();
         this.cursor.show();
+        this.snippetId = parseInt(this.osmd.Sheet.TitleString);
       });
+    }
+
+    onComplete = () => {
+      this.setState({practicing: false})
+      updateAbilities(this.performance, this.snippetId)
+      .then((response) => {
+        if (!response.data.error) {
+          console.log(response);
+          this.osmd.load('./api/get_sheet_music').then(() => {
+            this.osmd.render();
+            this.cursor.show();
+            this.snippetId = parseInt(this.osmd.Sheet.TitleString);
+          });
+        } else {
+          this.setState({loginError: response.data.error});
+        }
+      })
+      .catch((error) => { 
+        console.log(error); 
+      })
     }
 
       /* Runs approx 60 times a second */
     update = (timestamp: number) => {
       if (this.state.practicing) {
-        if (!this.currentSheetMusicStartTime) this.currentSheetMusicStartTime = timestamp;
-        if (!this.currentNoteTimeStamp) this.currentNoteTimeStamp = timestamp;
-        var timeSinceLastNote = timestamp - this.currentNoteTimeStamp;
+        if (!this.currentNoteTimeStamp) this.currentNoteTimeStamp = [timestamp, Date.now()];
+        var timeSinceLastNote = timestamp - this.currentNoteTimeStamp[0];
 
         if (timeSinceLastNote >= this.currentNoteDuration * 1000) {
 
           if (this.currentNoteDuration) {
             const prevVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries ? this.cursor.Iterator.CurrentVoiceEntries[0] : null;
             if (prevVoiceEntry) {
-              prevVoiceEntry.StemColor = "#FF0000";
-              prevVoiceEntry.Notes[0].NoteheadColor = "#FF0000";
-              this.osmd.render();
+
+              const prevNote: Note = prevVoiceEntry.Notes[0];
+              const prevNoteTimeStamp = (this.currentNoteTimeStamp[1] - this.currentSheetMusicStartTime)/1000;
+
+              //conditions for a hit:
+              // - midiId matches
+              // - hit within 0.25 sec of note
+              // - held for within 0.25 sec of length
+
+              const hitNote: MIDIActiveKey = this.props.userPressedNotes ? this.props.userPressedNotes.find((n) => 
+                n.MIDIid === prevNote.halfTone &&
+                n.Timestamp >= (prevNoteTimeStamp - 0.25) &&
+                n.Timestamp <= (prevNoteTimeStamp + 0.25)
+              ) : null;
+
+              //Check if user hit or miss
+              if (hitNote) {
+                console.log("YOU HIT IT", hitNote);
+                this.performance.push(true);
+              } else {
+                prevVoiceEntry.StemColor = "#FF0000";
+                prevVoiceEntry.Notes[0].NoteheadColor = "#FF0000";
+                this.performance.push(false);
+                this.osmd.render();
+              }
             }
             this.cursor.next();
           }
@@ -65,30 +119,14 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
               const baseNote: Note = cursorVoiceEntry.Notes[0];
               const currentNoteLength: number = baseNote.Length.RealValue;
       
-              this.currentNoteDuration = (currentNoteLength * 4) / (1.4);
-
-              const noteData = {
-                midiId: baseNote.halfTone,
-                noteDuration: this.currentNoteDuration,
-                noteLength: currentNoteLength,
-                noteTimestamp: ((this.currentNoteTimeStamp - this.currentSheetMusicStartTime) / 1000).toPrecision(4) + "s"
-              }
-
-              console.log(noteData);
-      
-              this.currentNoteTimeStamp = timestamp;
+              this.currentNoteDuration = (currentNoteLength * 4) / (1.4);      
+              this.currentNoteTimeStamp = [timestamp, Date.now()];
+          } else {
+            this.onComplete();
           }
         }
         window.requestAnimationFrame(this.update);
       }
-    }
-
-    shouldComponentUpdate(nextProps: OpenSheetMusicDisplayProps, nextState: any) {
-      if (nextProps.start && nextProps.start != this.props.start) {
-        this.setState({ practicing: true });
-        window.requestAnimationFrame(this.update);
-      }
-      return true;
     }
 
     // Called after render
