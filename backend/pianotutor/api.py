@@ -18,6 +18,7 @@ bp = Blueprint('api', __name__, url_prefix='/api')
 
 NUM_BARS = 4
 NUM_QUARTERS_IN_BAR = 4
+CONFIDENCE_THRESHOLD = 20
 
 ability_to_pattern = {
     0: ['even_division_f', 'whole_beat_a', 'even_division_b'],
@@ -448,7 +449,7 @@ def update_abilities():
         if hit_note and difficulty >= prev_ability:
             # If they hit the note and are at confidence = 10 for that note,
             # then "level up" their ability level and reset confidence
-            if prev_confidence == 19:
+            if prev_confidence == CONFIDENCE_THRESHOLD-1:
                 next_user_abilities[midi_id][0] += 1
                 next_user_abilities[midi_id][1] = 0
             # Otherwise just increase their confidence by 1
@@ -459,8 +460,8 @@ def update_abilities():
     output = {}
     for midi_id in unique_notes_in_snippet:
         if midi_id not in prev_user_abilities: continue  # TODO: check with Riya if we can ignore this
-        prev_score = prev_user_abilities[midi_id][0]*20 + prev_user_abilities[midi_id][1]
-        next_score = next_user_abilities[midi_id][0]*20 + next_user_abilities[midi_id][1]
+        prev_score = prev_user_abilities[midi_id][0]*CONFIDENCE_THRESHOLD + prev_user_abilities[midi_id][1]
+        next_score = next_user_abilities[midi_id][0]*CONFIDENCE_THRESHOLD + next_user_abilities[midi_id][1]
         delta = next_score - prev_score
 
         output[midi_id] = {
