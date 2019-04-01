@@ -8,7 +8,7 @@ services:
       - 5000:5000
     volumes:
       - ./backend/pianotutor:/backend/pianotutor
-      - /backend/instance
+      - db:/backend/instance
   frontend:
     build:
       context: ./frontend/
@@ -21,3 +21,5 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules # make sure we don't overwrite the installed node_modules with the previous bind mount
+volumes:
+  db:

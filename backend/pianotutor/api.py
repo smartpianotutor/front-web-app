@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, Response, g
+    Blueprint, Response, g, request, jsonify
 )
 from music21 import *
 import random
@@ -317,6 +317,7 @@ def uneven_uneven_division_a(base_midi_id):
     update_note_difficulties(base_midi_id, base_midi_id, base_midi_id)
     return [n1,n2,n3]
 
+
 def uneven_uneven_division_b(base_midi_id):
     base_n = midi_to_note[base_midi_id]
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
@@ -333,10 +334,12 @@ def uneven_uneven_division_b(base_midi_id):
     update_note_difficulties(base_midi_id, n2_midi_id, n3_midi_id)
     return [n1,n2,n3]
 
+
 @bp.route('/get_sheet_music', methods=('GET',))
 @login_required
 def get_sheet_music():
-    """Create a new post for the current user."""
+    """Get next sheet music for user."""
+    note_difficulties.clear()
     db = get_db()
     user = g.user[0]
     results = db.execute('SELECT midi_id, ability FROM UserAbility WHERE user_id = ? ;', (user, )).fetchall()
@@ -369,7 +372,8 @@ def get_sheet_music():
         # add passive note
         passive_note = random.SystemRandom().choice(passive_note_list)
         passive_pattern_list = []
-        #add passive note generation to all patterns up to and including the ability
+
+        # add passive note generation to all patterns up to and including the ability
         for ability in range(0, (note_ability_data[passive_note]+1)):
             passive_pattern_list.extend(ability_to_pattern[ability])
         passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
@@ -395,3 +399,67 @@ def get_sheet_music():
     outStr = out.decode('utf-8').strip()
     return Response(outStr, mimetype='text/xml')
 
+
+@bp.route('/update_abilities', methods=('POST',))
+@login_required
+def update_abilities():
+    """Update the user's abilities given a snippet_id and performance vector."""
+    db = get_db()
+    user = g.user[0]
+    snippet_id = int(request.form['snippet_id'])
+    performance = json.loads(request.form['performance'])
+
+    res = db.execute("select * from Snippet where snippet_id = ?", (snippet_id,))
+    snippet_metadata = json.loads(res.fetchone()[1])
+    res = db.execute('select midi_id, ability, confidence from UserAbility where user_id = ?',
+                     (user,)).fetchall()
+
+    # map of midi_id => (ability, confidence)
+    prev_user_abilities = {}
+    next_user_abilities = {}
+    for r in res:
+        prev_user_abilities[r[0]] = (r[1], r[2])
+        next_user_abilities[r[0]] = [r[1], r[2]]
+
+    assert len(snippet_metadata) == len(performance)
+    for i in range(len(performance)):
+        midi_id, difficulty = snippet_metadata[i]
+        if midi_id not in prev_user_abilities: continue  # TODO: check with Riya if we can ignore this
+        prev_ability = prev_user_abilities[midi_id][0]
+        prev_confidence = prev_user_abilities[midi_id][1]
+        hit_note = performance[i]
+
+        # reset confidence if they miss a note
+        if not hit_note and difficulty <= prev_ability:
+            next_user_abilities[midi_id][1] = 0
+            continue
+
+        if hit_note and difficulty >= prev_ability:
+            # If they hit the note and are at confidence = 10 for that note,
+            # then "level up" their ability level and reset confidence
+            if prev_confidence == 9 and prev_ability < 7:
+                next_user_abilities[midi_id][0] += 1
+                next_user_abilities[midi_id][1] = 0
+            # Otherwise just increase their confidence by 1
+            elif next_user_abilities[midi_id][1] < 9:
+                next_user_abilities[midi_id][1] += 1
+
+    unique_notes_in_snippet = set(map(lambda x: x[0], snippet_metadata))
+    output = {}
+    for midi_id in unique_notes_in_snippet:
+        if midi_id not in prev_user_abilities: continue  # TODO: check with Riya if we can ignore this
+        prev_score = prev_user_abilities[midi_id][0]*10 + prev_user_abilities[midi_id][1]
+        next_score = next_user_abilities[midi_id][0]*10 + next_user_abilities[midi_id][1]
+        delta = next_score - prev_score
+
+        output[midi_id] = {
+            'ability': next_user_abilities[midi_id][0],
+            'confidence': next_user_abilities[midi_id][1],
+            'delta': delta,
+        }
+
+    for midi_id, new_value in output.items():
+        db.execute("update UserAbility set ability=?, confidence=? where user_id = ?",
+                   (user, new_value['ability'], new_value['confidence']))
+    db.commit()
+    return jsonify(output)
