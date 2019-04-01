@@ -58,7 +58,7 @@ def test_update_abilities(app, client, auth):
             # check if user stopped improving
             if total_change == 0: break
             i += 1
-            print(i, total_change, abilities)
+            # print(i, total_change, abilities)
 
         for midi_id, new_value in new_abilities.items():
             assert new_value['ability'] == 7

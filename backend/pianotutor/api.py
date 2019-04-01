@@ -400,9 +400,9 @@ def get_sheet_music():
     GEX = musicxml.m21ToXml.GeneralObjectExporter(sc)
     out = GEX.parse()
     outStr = out.decode('utf-8').strip()
-    f = open(str(pathlib.Path(__file__).parent)+"/out/%.20f.xml" % time.time(),'w')
-    f.write(outStr)
-    f.close()
+    # f = open(str(pathlib.Path(__file__).parent)+"/out/%.20f.xml" % time.time(),'w')
+    # f.write(outStr)
+    # f.close()
 
     return Response(outStr, mimetype='text/xml')
 
