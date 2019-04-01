@@ -1,3 +1,5 @@
+import pathlib
+
 from flask import (
     Blueprint, Response, g, request, jsonify
 )
@@ -6,6 +8,7 @@ import random
 import collections
 import sys
 import json
+import time
 
 from pianotutor.shared import error_response
 from pianotutor.auth import login_required
@@ -397,6 +400,10 @@ def get_sheet_music():
     GEX = musicxml.m21ToXml.GeneralObjectExporter(sc)
     out = GEX.parse()
     outStr = out.decode('utf-8').strip()
+    f = open(str(pathlib.Path(__file__).parent)+"/out/%.20f.xml" % time.time(),'w')
+    f.write(outStr)
+    f.close()
+
     return Response(outStr, mimetype='text/xml')
 
 
@@ -425,8 +432,8 @@ def update_abilities():
     for i in range(len(performance)):
         midi_id, difficulty = snippet_metadata[i]
         if midi_id not in prev_user_abilities: continue  # TODO: check with Riya if we can ignore this
-        prev_ability = prev_user_abilities[midi_id][0]
-        prev_confidence = prev_user_abilities[midi_id][1]
+        prev_ability = next_user_abilities[midi_id][0]
+        prev_confidence = next_user_abilities[midi_id][1]
         hit_note = performance[i]
 
         # reset confidence if they miss a note
@@ -434,22 +441,26 @@ def update_abilities():
             next_user_abilities[midi_id][1] = 0
             continue
 
+        # They are already at the max level, nothing to do
+        if prev_ability >= 7:
+            continue
+
         if hit_note and difficulty >= prev_ability:
             # If they hit the note and are at confidence = 10 for that note,
             # then "level up" their ability level and reset confidence
-            if prev_confidence == 9 and prev_ability < 7:
+            if prev_confidence == 99:
                 next_user_abilities[midi_id][0] += 1
                 next_user_abilities[midi_id][1] = 0
             # Otherwise just increase their confidence by 1
-            elif next_user_abilities[midi_id][1] < 9:
+            else:
                 next_user_abilities[midi_id][1] += 1
 
     unique_notes_in_snippet = set(map(lambda x: x[0], snippet_metadata))
     output = {}
     for midi_id in unique_notes_in_snippet:
         if midi_id not in prev_user_abilities: continue  # TODO: check with Riya if we can ignore this
-        prev_score = prev_user_abilities[midi_id][0]*10 + prev_user_abilities[midi_id][1]
-        next_score = next_user_abilities[midi_id][0]*10 + next_user_abilities[midi_id][1]
+        prev_score = prev_user_abilities[midi_id][0]*100 + prev_user_abilities[midi_id][1]
+        next_score = next_user_abilities[midi_id][0]*100 + next_user_abilities[midi_id][1]
         delta = next_score - prev_score
 
         output[midi_id] = {
@@ -459,7 +470,7 @@ def update_abilities():
         }
 
     for midi_id, new_value in output.items():
-        db.execute("update UserAbility set ability=?, confidence=? where user_id = ?",
-                   (user, new_value['ability'], new_value['confidence']))
+        db.execute("update UserAbility set ability=?, confidence=? where user_id = ? and midi_id=?",
+                   (new_value['ability'], new_value['confidence'], user, midi_id))
     db.commit()
     return jsonify(output)
