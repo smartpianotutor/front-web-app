@@ -448,7 +448,7 @@ def update_abilities():
         if hit_note and difficulty >= prev_ability:
             # If they hit the note and are at confidence = 10 for that note,
             # then "level up" their ability level and reset confidence
-            if prev_confidence == 99:
+            if prev_confidence == 19:
                 next_user_abilities[midi_id][0] += 1
                 next_user_abilities[midi_id][1] = 0
             # Otherwise just increase their confidence by 1
@@ -459,8 +459,8 @@ def update_abilities():
     output = {}
     for midi_id in unique_notes_in_snippet:
         if midi_id not in prev_user_abilities: continue  # TODO: check with Riya if we can ignore this
-        prev_score = prev_user_abilities[midi_id][0]*100 + prev_user_abilities[midi_id][1]
-        next_score = next_user_abilities[midi_id][0]*100 + next_user_abilities[midi_id][1]
+        prev_score = prev_user_abilities[midi_id][0]*20 + prev_user_abilities[midi_id][1]
+        next_score = next_user_abilities[midi_id][0]*20 + next_user_abilities[midi_id][1]
         delta = next_score - prev_score
 
         output[midi_id] = {
