@@ -5,6 +5,7 @@ import { OpenSheetMusicDisplay as OSMD, Cursor, VoiceEntry, Note } from 'openshe
 import Soundfont from 'soundfont-player';
 
 import { updateAbilities } from './api';
+import AbilityDisplay from './AbilitiyDisplay';
 
 import './osmd.css';
 
@@ -302,19 +303,16 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
             <div className="Practice-Text">
               <Typography variant="h2" color="textPrimary">{this.state.status === PracticePageStatus.Ready ? "Press the first note on your MIDI device to begin" : "Keep playing.."}</Typography>
             </div>
-            <div style={{marginTop: '10vh', marginBottom: '10vh', marginLeft: '20vw'}} ref={this.divRef} />
+            <div style={{ marginBottom: '10vh', paddingLeft: '12vw'}} ref={this.divRef} />
             {this.state.performance.length ? (
+            <div>
               <div>
-                <div style={{textAlign: 'center'}}>
-                  <h2>Notes played in last snippet</h2>
-                </div>
-                <div className="Scores">
-                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{this.midi_to_note[a.midiId]}</Typography>)}
-                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.ability}</Typography>)}
-                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.confidence}</Typography>)}
-                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.delta}</Typography>)}
-                </div>
+                <Typography variant='h6' align='center' gutterBottom>Notes Played In Last Snippet</Typography>
               </div>
+              <div className="Scores">
+                {this.state.performance.map((a) => <AbilityDisplay note={this.midi_to_note[a.midiId]} ability={a.ability} confidence={a.confidence} delta={a.delta} /> )}
+              </div>
+            </div>
             ) : null}
           </div>
         )

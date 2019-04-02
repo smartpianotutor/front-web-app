@@ -3,6 +3,7 @@
     height: 100vh;
     background-color: white;
     margin-top: 126px;
+    margin-bottom: 200px;
 }
 
 .Practice-Text {
@@ -21,9 +22,9 @@
 
 .Scores {
     display: flex;
-    width: 50vw;
+    width: 800px;
     margin: auto;
-    justify-content: space-around;
+    justify-content: start;
     flex-wrap: wrap;
 }
 
@@ -31,4 +32,5 @@
     flex-grow: 1;
     flex-shrink: 0;
     text-align: center;
+    padding: 12px;
 }
