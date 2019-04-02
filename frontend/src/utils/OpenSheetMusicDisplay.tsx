@@ -2,6 +2,7 @@ import React, { Component, RefObject } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import { OpenSheetMusicDisplay as OSMD, Cursor, VoiceEntry, Note } from 'opensheetmusicdisplay';
+import Soundfont from 'soundfont-player';
 
 import { updateAbilities } from './api';
 
@@ -72,13 +73,14 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
 
     context: AudioContext;
     midiAcc: WebMidi.MIDIAccess;
+    piano: Soundfont.Player;
   
     activeNotes: MIDIActiveKey[] = [];
     firstNote: number;
 
     state = {
       status: PracticePageStatus.Welcome,
-      performance: [] as Ability[]
+      performance: [] as Ability[],
     }
 
     constructor(props: any) {
@@ -195,6 +197,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     setUpMIDIAccess = () => {
       this.setState({ status: PracticePageStatus.ConnectingMIDI });
       this.context = new AudioContext();
+      Soundfont.instrument(this.context, 'acoustic_grand_piano').then((p) => this.piano = p);
     
       if (navigator.requestMIDIAccess) {
         navigator.requestMIDIAccess().then(this.onMidiInit, this.onMidiReject);
@@ -250,13 +253,13 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     }
 
     noteOn = (noteNum: number) => {
+      this.piano.play(noteNum);
       if (this.state.status === PracticePageStatus.Ready && noteNum === this.firstNote) {
         window.requestAnimationFrame(this.update);
         this.setState({ status: PracticePageStatus.Practicing });
       } else if (this.state.status === PracticePageStatus.Practicing) {
         const time = ((Date.now() - this.currentSheetMusicStartTime) / 1000);
         this.activeNotes.push({MIDIid: noteNum, Timestamp: time, Length: 0});
-  
         console.log("NOTE ON:", noteNum);
       }
     }
