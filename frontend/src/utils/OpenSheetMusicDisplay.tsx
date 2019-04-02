@@ -204,8 +204,6 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       } else {
         alert("Why are you not using Google Chrome?");
       }
-  
-      this.setState({ status: PracticePageStatus.Ready }, () => this.setupOsmd() );
     }
   
     // MIDI system has been started
@@ -228,6 +226,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
         input.value.onmidimessage = this.MIDIMessageEventHandler;
         haveAtLeastOneDevice = true;
+        this.setState({ status: PracticePageStatus.Ready }, () => this.setupOsmd() );
       }
       if (!haveAtLeastOneDevice) {
         console.log("Connect a MIDI input and refresh!");
