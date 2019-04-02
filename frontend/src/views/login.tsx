@@ -8,8 +8,10 @@ import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
+import CardMedia from '@material-ui/core/CardMedia';
 
 import './login.css';
+import Logo from '../images/icon.png';
 
 interface LoginProps {
     onSignIn: any;
@@ -73,8 +75,8 @@ class Login extends Component<LoginProps> {
     const { value } = this.state;
 
     return (
-      <div className="Login">
-        <Typography variant="h3" className="header" gutterBottom>Smart Piano Tutor</Typography>
+      <div className="Login" >
+        <CardMedia image={Logo} title="Smart Piano Tutor" className="Media"/>
         <Paper className="paper">
           <Tabs value={value} variant="fullWidth" onChange={this.handleChange} style={{width: '100%'}} indicatorColor='primary'>
             <Tab label="Sign In" />
@@ -171,9 +173,7 @@ class Login extends Component<LoginProps> {
               </div>
             </form>
           }
-          
         </Paper>
-
       </div>
     );
   }

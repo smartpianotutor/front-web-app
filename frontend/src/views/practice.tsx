@@ -3,8 +3,11 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import CardMedia from '@material-ui/core/CardMedia';
 
 import OpenSheetMusicDisplay from './../utils/OpenSheetMusicDisplay';
+import Logo from '../images/logo.png';
+import './practice.css';
 
 interface PracticeProps {
   username: string,
@@ -16,12 +19,13 @@ class Practice extends Component<PracticeProps> {
   render() {
     return (
       <div>
-        <AppBar position="absolute" style={{ backgroundColor: '#364352'}}>
+        <AppBar position="absolute" color="primary">
           <Toolbar>
-          <Typography variant="h6" style={{flexGrow: 1, color: '#fff'}}>
-            Smart Piano Tutor
-          </Typography>
-            <Button style={{color: '#fff'}} variant="outlined" onClick={this.props.onSignOut}> Sign Out </Button>
+            <CardMedia image={Logo} title="Smart Piano Tutor" className="Header-Logo"/>
+            <Typography variant="h6" style={{flexGrow: 1, color: '#000', marginLeft: '15px' }}>
+              Smart Piano Tutor
+            </Typography>
+            <Button variant="outlined" onClick={this.props.onSignOut}> Sign Out </Button>
           </Toolbar>
         </AppBar>
         <OpenSheetMusicDisplay username={this.props.username}/>
