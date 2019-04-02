@@ -1,11 +1,14 @@
 import React, { Component, RefObject } from 'react';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 import { OpenSheetMusicDisplay as OSMD, Cursor, VoiceEntry, Note } from 'opensheetmusicdisplay';
 
 import { updateAbilities } from './api';
 
+import './osmd.css';
+
 interface OpenSheetMusicDisplayProps {
-    start: boolean,
-    userPressedNotes: MIDIActiveKey[]
+    username: string
 }
 
 class MIDIActiveKey {
@@ -14,7 +17,27 @@ class MIDIActiveKey {
   Length: number;
 }
 
+class Ability {
+  midiId: number;
+  ability: number;
+  confidence: number;
+  delta: number;
+}
+
+enum PracticePageStatus {
+  Welcome,
+  ConnectingMIDI,
+  MIDIFailed,
+  NoMIDI,
+  Ready,
+  Practicing,
+  Finished
+}
+
 class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
+
+    BPS: number = 1;
+    TIME_THRESHOLD_IN_SEC: number = 0.25;
 
     osmd: OSMD;
     cursor: Cursor;
@@ -27,8 +50,17 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     performance: boolean[] = [];
     snippetId: number;
 
+    context: AudioContext = null;
+    oscillator: OscillatorNode = null;
+    midiAcc: WebMidi.MIDIAccess = null;
+    envelope: GainNode = null;
+  
+    activeNotes: MIDIActiveKey[] = [];
+    firstNote: number;
+
     state = {
-      practicing: false
+      status: PracticePageStatus.Welcome,
+      performance: [] as Ability[]
     }
 
     constructor(props: any) {
@@ -50,20 +82,33 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       this.osmd.load('./api/get_sheet_music').then(() => {
         this.osmd.render();
         this.cursor.show();
+        this.firstNote = this.cursor.Iterator.CurrentVoiceEntries[0].Notes[0].halfTone;
         this.snippetId = parseInt(this.osmd.Sheet.TitleString);
       });
     }
 
     onComplete = () => {
-      this.setState({practicing: false})
+      this.setState({ status: PracticePageStatus.Finished })
       updateAbilities(this.performance, this.snippetId)
       .then((response) => {
         if (!response.data.error) {
-          console.log(response);
           this.osmd.load('./api/get_sheet_music').then(() => {
             this.osmd.render();
             this.cursor.show();
+            this.firstNote = this.cursor.Iterator.CurrentVoiceEntries[0].Notes[0].halfTone;
             this.snippetId = parseInt(this.osmd.Sheet.TitleString);
+            this.performance = [];
+            this.setState({ 
+              status: PracticePageStatus.Ready, 
+              performance: Object.keys(response.data).map(k => 
+                { return {
+                  midiId: k, 
+                  ability: response.data[k].ability,
+                  confidence: response.data[k].confidence,
+                  delta: response.data[k].delta
+                }}
+              ) 
+            });
           });
         } else {
           this.setState({loginError: response.data.error});
@@ -76,7 +121,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
 
       /* Runs approx 60 times a second */
     update = (timestamp: number) => {
-      if (this.state.practicing) {
+      if (this.state.status === PracticePageStatus.Practicing) {
         if (!this.currentNoteTimeStamp) this.currentNoteTimeStamp = [timestamp, Date.now()];
         var timeSinceLastNote = timestamp - this.currentNoteTimeStamp[0];
 
@@ -89,15 +134,10 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
               const prevNote: Note = prevVoiceEntry.Notes[0];
               const prevNoteTimeStamp = (this.currentNoteTimeStamp[1] - this.currentSheetMusicStartTime)/1000;
 
-              //conditions for a hit:
-              // - midiId matches
-              // - hit within 0.25 sec of note
-              // - held for within 0.25 sec of length
-
-              const hitNote: MIDIActiveKey = this.props.userPressedNotes ? this.props.userPressedNotes.find((n) => 
+              const hitNote: MIDIActiveKey = this.activeNotes ? this.activeNotes.find((n) => 
                 n.MIDIid === prevNote.halfTone &&
-                n.Timestamp >= (prevNoteTimeStamp - 0.25) &&
-                n.Timestamp <= (prevNoteTimeStamp + 0.25)
+                n.Timestamp >= (prevNoteTimeStamp - this.TIME_THRESHOLD_IN_SEC) &&
+                n.Timestamp <= (prevNoteTimeStamp + this.TIME_THRESHOLD_IN_SEC)
               ) : null;
 
               //Check if user hit or miss
@@ -105,6 +145,10 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
                 console.log("YOU HIT IT", hitNote);
                 this.performance.push(true);
               } else {
+                console.log({
+                  midiId: prevNote.halfTone,
+                  timeStamp: prevNoteTimeStamp
+                })
                 prevVoiceEntry.StemColor = "#FF0000";
                 prevVoiceEntry.Notes[0].NoteheadColor = "#FF0000";
                 this.performance.push(false);
@@ -119,7 +163,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
               const baseNote: Note = cursorVoiceEntry.Notes[0];
               const currentNoteLength: number = baseNote.Length.RealValue;
       
-              this.currentNoteDuration = (currentNoteLength * 4) / (1.4);      
+              this.currentNoteDuration = (currentNoteLength * 4) / (this.BPS);      
               this.currentNoteTimeStamp = [timestamp, Date.now()];
           } else {
             this.onComplete();
@@ -129,13 +173,152 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       }
     }
 
-    // Called after render
-    componentDidMount() {
-      this.setupOsmd();
+
+    // WEBMIDI FUNCTIONS //
+    setUpMIDIAccess = () => {
+      this.setState({ status: PracticePageStatus.ConnectingMIDI });
+      this.context = new AudioContext();
+    
+      if (navigator.requestMIDIAccess) {
+        navigator.requestMIDIAccess().then(this.onMidiInit, this.onMidiReject);
+      } else {
+        alert("Why are you not using Google Chrome?");
+      }
+    
+      // set up the basic oscillator chain, muted to begin with.
+      this.oscillator = this.context.createOscillator()
+      this.envelope = this.context.createGain()
+      
+      this.oscillator.frequency.setValueAtTime(110, 0);
+      this.oscillator.connect(this.envelope);
+      this.envelope.connect(this.context.destination);
+      this.envelope.gain.value = 0.0; // Mute the sound
+      this.oscillator.start(0); // Go ahead and start up the oscillator
+  
+      this.setState({ status: PracticePageStatus.Ready }, () => this.setupOsmd() );
     }
   
+    // MIDI system has been started
+    onMidiInit = (midi: WebMidi.MIDIAccess) => {
+      this.midiAcc = midi;
+      this.hookUpMidi();
+      this.midiAcc.onstatechange = this.hookUpMidi;
+    };
+  
+    // MIDI failed to start
+    onMidiReject = (err: any) => {
+      console.log(err);
+      this.setState({ status: PracticePageStatus.MIDIFailed })
+    };
+
+    //Look for MIDI inputs
+    hookUpMidi = () => {
+      var haveAtLeastOneDevice = false;
+      var inputs = this.midiAcc.inputs.values();
+      for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+        input.value.onmidimessage = this.MIDIMessageEventHandler;
+        haveAtLeastOneDevice = true;
+      }
+      if (!haveAtLeastOneDevice) {
+        console.log("Connect a MIDI input and refresh!");
+        this.setState({ status: PracticePageStatus.NoMIDI });
+      }
+    }
+
+    MIDIMessageEventHandler = (event: WebMidi.MIDIMessageEvent) => {
+      // Mask off the lower nibble (MIDI channel, which we don't care about)
+      switch (event.data[0] & 0xf0) {
+        case 0x90:
+          if (event.data[2] != 0) {
+            // if velocity != 0, this is a note-on message
+            this.noteOn(event.data[1]);
+            return;
+          }
+    
+        // if velocity == 0, fall thru: it's a note-off.  MIDI's weird, ya'll.
+        case 0x80:
+          this.noteOff(event.data[1]);
+          return;
+        }
+    }
+
+    noteOn = (noteNum: number) => {
+      if (this.state.status === PracticePageStatus.Ready && noteNum === this.firstNote) {
+        window.requestAnimationFrame(this.update);
+        this.setState({ status: PracticePageStatus.Practicing });
+      } else if (this.state.status === PracticePageStatus.Practicing) {
+        const time = ((Date.now() - this.currentSheetMusicStartTime) / 1000);
+        this.activeNotes.push({MIDIid: noteNum, Timestamp: time, Length: 0});
+  
+        console.log("NOTE ON:", noteNum);
+        this.oscillator.frequency.cancelScheduledValues(0);
+        this.oscillator.frequency.setTargetAtTime( 250 * Math.pow(2,(noteNum-69)/12), 0, 0.05 );
+        this.envelope.gain.cancelScheduledValues(0);
+        this.envelope.gain.setTargetAtTime(1.0, 0, 0.05);
+      }
+    }
+      
+    noteOff = (noteNum: number) => {
+      console.log("NOTE OFF", noteNum);
+  
+      var pressedNote = this.activeNotes.find((n) => n.MIDIid === noteNum && n.Length === 0);
+      if (pressedNote) pressedNote.Length = ((Date.now() - this.currentSheetMusicStartTime) / 1000) - pressedNote.Timestamp;
+  
+      this.envelope.gain.cancelScheduledValues(0);
+      this.envelope.gain.setTargetAtTime(0.0, 0, 0.05);
+    }
+
     render() {
-      return (<div style={{marginTop: '10vh'}} ref={this.divRef} />);
+      switch(this.state.status) {
+        case PracticePageStatus.Welcome: return (
+          <div className="Welcome">
+            <Typography variant="h2" gutterBottom>Welcome, {this.props.username}</Typography>
+            <Button color="primary" variant="contained" onClick={this.setUpMIDIAccess}>
+              Click Here to Start MIDI Initialization
+            </Button>
+          </div>
+        )
+        case PracticePageStatus.ConnectingMIDI: return (
+          <div className="Welcome">
+            <Typography variant="h2">Initializing Audio Context..</Typography>
+          </div>
+        )
+        case PracticePageStatus.MIDIFailed: return (
+          <div className="Welcome">
+            <Typography variant="h2">Unable to initialize Audio Context, please refresh.</Typography>
+          </div>
+        )
+        case PracticePageStatus.NoMIDI: return (
+          <div className="Welcome">
+            <Typography variant="h2">No MIDI devices detected, please connect a device and try again.</Typography>
+          </div>
+        )
+        case PracticePageStatus.Practicing:
+        case PracticePageStatus.Finished:
+        case PracticePageStatus.Ready: return (
+          <div className="Practice">
+            {this.state.status === PracticePageStatus.Ready ? (
+              <div className="Practice-Text">
+                <Typography variant="h2" color="textPrimary">Press the first note on your MIDI device to begin</Typography>
+              </div> ) : null
+            }
+            <div style={{marginTop: '10vh', marginBottom: '10vh', marginLeft: '20vw'}} ref={this.divRef} />
+            {this.state.performance.length ? (
+              <div>
+                <div style={{textAlign: 'center'}}>
+                  <h2>Notes played in last snippet</h2>
+                </div>
+                <div className="Scores">
+                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.midiId}</Typography>)}
+                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.ability}</Typography>)}
+                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.confidence}</Typography>)}
+                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.delta}</Typography>)}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )
+      }
     }
   }
 

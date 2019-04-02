@@ -2,13 +2,12 @@
     width: 100vw;
     height: 100vh;
     background-color: white;
-    margin-top: 32px;
+    margin-top: 126px;
 }
 
 .Practice-Text {
     width: fit-content;
     margin: auto;
-    margin-top: 10vh;
 }
 
 .Welcome {
@@ -18,4 +17,18 @@
     align-items: center;
     width: 100vw;
     height: 100vh;
+}
+
+.Scores {
+    display: flex;
+    width: 50vw;
+    margin: auto;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.Score_Elem {
+    flex-grow: 1;
+    flex-shrink: 0;
+    text-align: center;
 }
