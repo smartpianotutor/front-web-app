@@ -34,10 +34,30 @@ enum PracticePageStatus {
   Finished
 }
 
+interface IMIDI_To_Note {
+  [key: number]: string;
+}
+
 class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
 
     BPS: number = 1;
     TIME_THRESHOLD_IN_SEC: number = 0.25;
+
+    midi_to_note: IMIDI_To_Note = {
+      55: 'G3',
+      57: 'A3',
+      59: 'B3',
+      60: 'C4',
+      62: 'D4',
+      64: 'E4',
+      65: 'F4',
+      67: 'G4',
+      69: 'A4',
+      71: 'B4',
+      72: 'C5',
+      74: 'D5',
+      76: 'E5'
+    };
 
     osmd: OSMD;
     cursor: Cursor;
@@ -50,10 +70,8 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     performance: boolean[] = [];
     snippetId: number;
 
-    context: AudioContext = null;
-    oscillator: OscillatorNode = null;
-    midiAcc: WebMidi.MIDIAccess = null;
-    envelope: GainNode = null;
+    context: AudioContext;
+    midiAcc: WebMidi.MIDIAccess;
   
     activeNotes: MIDIActiveKey[] = [];
     firstNote: number;
@@ -173,7 +191,6 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       }
     }
 
-
     // WEBMIDI FUNCTIONS //
     setUpMIDIAccess = () => {
       this.setState({ status: PracticePageStatus.ConnectingMIDI });
@@ -184,16 +201,6 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       } else {
         alert("Why are you not using Google Chrome?");
       }
-    
-      // set up the basic oscillator chain, muted to begin with.
-      this.oscillator = this.context.createOscillator()
-      this.envelope = this.context.createGain()
-      
-      this.oscillator.frequency.setValueAtTime(110, 0);
-      this.oscillator.connect(this.envelope);
-      this.envelope.connect(this.context.destination);
-      this.envelope.gain.value = 0.0; // Mute the sound
-      this.oscillator.start(0); // Go ahead and start up the oscillator
   
       this.setState({ status: PracticePageStatus.Ready }, () => this.setupOsmd() );
     }
@@ -251,10 +258,6 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
         this.activeNotes.push({MIDIid: noteNum, Timestamp: time, Length: 0});
   
         console.log("NOTE ON:", noteNum);
-        this.oscillator.frequency.cancelScheduledValues(0);
-        this.oscillator.frequency.setTargetAtTime( 250 * Math.pow(2,(noteNum-69)/12), 0, 0.05 );
-        this.envelope.gain.cancelScheduledValues(0);
-        this.envelope.gain.setTargetAtTime(1.0, 0, 0.05);
       }
     }
       
@@ -263,9 +266,6 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
   
       var pressedNote = this.activeNotes.find((n) => n.MIDIid === noteNum && n.Length === 0);
       if (pressedNote) pressedNote.Length = ((Date.now() - this.currentSheetMusicStartTime) / 1000) - pressedNote.Timestamp;
-  
-      this.envelope.gain.cancelScheduledValues(0);
-      this.envelope.gain.setTargetAtTime(0.0, 0, 0.05);
     }
 
     render() {
@@ -297,11 +297,9 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
         case PracticePageStatus.Finished:
         case PracticePageStatus.Ready: return (
           <div className="Practice">
-            {this.state.status === PracticePageStatus.Ready ? (
-              <div className="Practice-Text">
-                <Typography variant="h2" color="textPrimary">Press the first note on your MIDI device to begin</Typography>
-              </div> ) : null
-            }
+            <div className="Practice-Text">
+              <Typography variant="h2" color="textPrimary">{this.state.status === PracticePageStatus.Ready ? "Press the first note on your MIDI device to begin" : "Keep playing.."}</Typography>
+            </div>
             <div style={{marginTop: '10vh', marginBottom: '10vh', marginLeft: '20vw'}} ref={this.divRef} />
             {this.state.performance.length ? (
               <div>
@@ -309,7 +307,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
                   <h2>Notes played in last snippet</h2>
                 </div>
                 <div className="Scores">
-                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.midiId}</Typography>)}
+                  {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{this.midi_to_note[a.midiId]}</Typography>)}
                   {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.ability}</Typography>)}
                   {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.confidence}</Typography>)}
                   {this.state.performance.map((a) => <Typography style={{flexBasis: (100/(this.state.performance.length+1) + 1).toString() + '%' }} className="Score_Elem" key={a.midiId.toString()}>{a.delta}</Typography>)}
