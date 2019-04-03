@@ -430,8 +430,8 @@ def update_abilities():
         prev_user_abilities[r[0]] = (r[1], r[2])
         next_user_abilities[r[0]] = [r[1], r[2]]
 
-    assert len(snippet_metadata) == len(performance)
-    for i in range(len(performance)):
+    #assert len(snippet_metadata) == len(performance)
+    for i in range(len(snippet_metadata)):
         midi_id, difficulty = snippet_metadata[i]
         if midi_id not in prev_user_abilities: continue  # TODO: check with Riya if we can ignore this
         prev_ability = next_user_abilities[midi_id][0]
