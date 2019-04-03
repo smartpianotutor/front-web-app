@@ -90,22 +90,25 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       this.divRef = React.createRef<HTMLDivElement>();
     }
   
-    setupOsmd() {
-      const options = {
-        autoResize: true,
-        drawCredits: false,
-        drawPartNames: false,
-        drawFingerings: false,
-        coloringEnabled: true
+    setupOsmd = () => {
+      if (!this.osmd) {
+        const options = {
+          autoResize: true,
+          drawCredits: false,
+          drawPartNames: false,
+          drawFingerings: false,
+          coloringEnabled: true
+        }
+        console.log("SET UP OSMD");
+        this.osmd = new OSMD(this.divRef.current, options);
+        this.cursor = this.osmd.cursor;
+        this.osmd.load('./api/get_sheet_music').then(() => {
+          this.osmd.render();
+          this.cursor.show();
+          this.firstNote = this.cursor.Iterator.CurrentVoiceEntries[0].Notes[0].halfTone;
+          this.snippetId = parseInt(this.osmd.Sheet.TitleString);
+        });
       }
-      this.osmd = new OSMD(this.divRef.current, options);
-      this.cursor = this.osmd.cursor;
-      this.osmd.load('./api/get_sheet_music').then(() => {
-        this.osmd.render();
-        this.cursor.show();
-        this.firstNote = this.cursor.Iterator.CurrentVoiceEntries[0].Notes[0].halfTone;
-        this.snippetId = parseInt(this.osmd.Sheet.TitleString);
-      });
     }
 
     onComplete = () => {
@@ -227,7 +230,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
         input.value.onmidimessage = this.MIDIMessageEventHandler;
         haveAtLeastOneDevice = true;
-        this.setState({ status: PracticePageStatus.Ready }, () => this.setupOsmd() );
+        this.setState({ status: PracticePageStatus.Ready }, this.setupOsmd );
       }
       if (!haveAtLeastOneDevice) {
         console.log("Connect a MIDI input and refresh!");
