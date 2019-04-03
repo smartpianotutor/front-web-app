@@ -152,28 +152,32 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
             const prevVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries ? this.cursor.Iterator.CurrentVoiceEntries[0] : null;
             if (prevVoiceEntry) {
 
-              const prevNote: Note = prevVoiceEntry.Notes[0];
-              const prevNoteTimeStamp = (this.currentNoteTimeStamp[1] - this.currentSheetMusicStartTime)/1000;
-
-              const hitNote: MIDIActiveKey = this.activeNotes ? this.activeNotes.find((n) => 
-                n.MIDIid === prevNote.halfTone &&
-                n.Timestamp >= (prevNoteTimeStamp - this.TIME_THRESHOLD_IN_SEC) &&
-                n.Timestamp <= (prevNoteTimeStamp + this.TIME_THRESHOLD_IN_SEC)
-              ) : null;
-
-              //Check if user hit or miss
-              if (hitNote) {
-                console.log("YOU HIT IT", hitNote);
+              if (this.props.username === 'demo') {
                 this.performance.push(true);
               } else {
-                console.log({
-                  midiId: prevNote.halfTone,
-                  timeStamp: prevNoteTimeStamp
-                })
-                prevVoiceEntry.StemColor = "#FF0000";
-                prevVoiceEntry.Notes[0].NoteheadColor = "#FF0000";
-                this.performance.push(false);
-                this.osmd.render();
+                const prevNote: Note = prevVoiceEntry.Notes[0];
+                const prevNoteTimeStamp = (this.currentNoteTimeStamp[1] - this.currentSheetMusicStartTime)/1000;
+
+                const hitNote: MIDIActiveKey = this.activeNotes ? this.activeNotes.find((n) => 
+                  n.MIDIid === prevNote.halfTone &&
+                  n.Timestamp >= (prevNoteTimeStamp - this.TIME_THRESHOLD_IN_SEC) &&
+                  n.Timestamp <= (prevNoteTimeStamp + this.TIME_THRESHOLD_IN_SEC)
+                ) : null;
+
+                //Check if user hit or miss
+                if (hitNote) {
+                  console.log("YOU HIT IT", hitNote);
+                  this.performance.push(true);
+                } else {
+                  console.log({
+                    midiId: prevNote.halfTone,
+                    timeStamp: prevNoteTimeStamp
+                  })
+                  prevVoiceEntry.StemColor = "#FF0000";
+                  prevVoiceEntry.Notes[0].NoteheadColor = "#FF0000";
+                  this.performance.push(false);
+                  this.osmd.render();
+                }
               }
             }
             this.cursor.next();
@@ -186,6 +190,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       
               this.currentNoteDuration = (currentNoteLength * 4) / (this.BPS);      
               this.currentNoteTimeStamp = [timestamp, Date.now()];
+              this.piano.play(baseNote.halfTone);
           } else {
             this.onComplete();
           }
