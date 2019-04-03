@@ -211,7 +211,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       
               this.currentNoteDuration = (currentNoteLength * 4) / (this.BPS);      
               this.currentNoteTimeStamp = [timestamp, Date.now()];
-              this.piano.play(baseNote.halfTone);
+              if (this.props.username === 'demo') this.piano.play(baseNote.halfTone);
           } else {
             this.onComplete();
           }
