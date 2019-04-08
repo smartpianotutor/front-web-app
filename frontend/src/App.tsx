@@ -10,7 +10,7 @@ import { register, signIn, signOut } from './utils/api';
 const theme = createMuiTheme({
   palette: {
     primary: {
-      main: '#cdf9e2',
+      main: '#1c4587',
     }
   }
 })

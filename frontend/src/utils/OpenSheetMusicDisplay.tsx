@@ -8,6 +8,7 @@ import { updateAbilities } from './api';
 import AbilityDisplay from './AbilitiyDisplay';
 
 import './osmd.css';
+import Practice from '../views/practice';
 
 interface OpenSheetMusicDisplayProps {
     username: string
@@ -32,6 +33,7 @@ enum PracticePageStatus {
   MIDIFailed,
   NoMIDI,
   Ready,
+  Starting,
   Practicing,
   Finished
 }
@@ -68,6 +70,10 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     currentNoteTimeStamp: number[];
     currentNoteDuration: number = 0;
     currentSheetMusicStartTime: number = 0;
+
+    startMetronomeTime: number = 0;
+    metronomeCount: number = 0;
+    metronome: HTMLAudioElement = null;
 
     performance: boolean[] = [];
     snippetId: number;
@@ -145,6 +151,18 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
 
       /* Runs approx 60 times a second */
     update = (timestamp: number) => {
+      if (!this.startMetronomeTime) this.startMetronomeTime = timestamp;
+      if (timestamp - this.startMetronomeTime > this.BPS*1000) {
+        this.metronome.play();
+        this.startMetronomeTime = 0;
+        if (this.state.status === PracticePageStatus.Starting) {
+          this.metronomeCount++;
+          if (this.metronomeCount === 5) {
+            this.metronomeCount = 0;
+            this.setState({ status: PracticePageStatus.Practicing });
+          }
+        }
+      }
       if (this.state.status === PracticePageStatus.Practicing) {
         if (!this.currentNoteTimeStamp) this.currentNoteTimeStamp = [timestamp, Date.now()];
         var timeSinceLastNote = timestamp - this.currentNoteTimeStamp[0];
@@ -193,8 +211,8 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
             this.onComplete();
           }
         }
-        window.requestAnimationFrame(this.update);
       }
+      if (this.state.status === PracticePageStatus.Starting || this.state.status === PracticePageStatus.Practicing) window.requestAnimationFrame(this.update);
     }
 
     // WEBMIDI FUNCTIONS //
@@ -202,6 +220,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       this.setState({ status: PracticePageStatus.ConnectingMIDI });
       this.context = new AudioContext();
       Soundfont.instrument(this.context, 'acoustic_grand_piano').then((p) => this.piano = p);
+      this.metronome = new Audio("/metronome.wav");
     
       if (navigator.requestMIDIAccess) {
         navigator.requestMIDIAccess().then(this.onMidiInit, this.onMidiReject);
@@ -256,11 +275,11 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
     }
 
     noteOn = (noteNum: number) => {
-      this.piano.play(noteNum);
       if (this.state.status === PracticePageStatus.Ready && noteNum === this.firstNote) {
         window.requestAnimationFrame(this.update);
-        this.setState({ status: PracticePageStatus.Practicing });
+        this.setState({ status: PracticePageStatus.Starting });
       } else if (this.state.status === PracticePageStatus.Practicing) {
+        this.piano.play(noteNum);
         const time = ((Date.now() - this.currentSheetMusicStartTime) / 1000);
         this.activeNotes.push({MIDIid: noteNum, Timestamp: time, Length: 0});
         console.log("NOTE ON:", noteNum);
@@ -299,12 +318,20 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
             <Typography variant="h2">No MIDI devices detected, please connect a device and try again.</Typography>
           </div>
         )
+        case PracticePageStatus.Starting:
         case PracticePageStatus.Practicing:
         case PracticePageStatus.Finished:
         case PracticePageStatus.Ready: return (
           <div className="Practice">
             <div className="Practice-Text">
-              <Typography variant="h2" color="textPrimary">{this.state.status === PracticePageStatus.Ready ? "Press the first note on your MIDI device to begin" : "Keep playing.."}</Typography>
+              <Typography variant="h2" color="textPrimary">{
+                this.state.status === PracticePageStatus.Ready ?
+                "Press the first note on your MIDI device to begin" :
+                this.state.status === PracticePageStatus.Starting ?
+                "Get Ready.." : 
+                "Keep playing.."
+                }
+              </Typography>
             </div>
             <div style={{ marginBottom: '10vh', paddingLeft: '12vw'}} ref={this.divRef} />
             {this.state.performance.length ? (
@@ -313,7 +340,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
                 <Typography variant='h6' align='center' gutterBottom>Notes Played In Last Snippet</Typography>
               </div>
               <div className="Scores">
-                {this.state.performance.map((a) => <AbilityDisplay note={this.midi_to_note[a.midiId]} ability={a.ability} confidence={a.confidence} delta={a.delta} /> )}
+                {this.state.performance.map((a) => <AbilityDisplay key={a.midiId} note={this.midi_to_note[a.midiId]} ability={a.ability} confidence={a.confidence} delta={a.delta} /> )}
               </div>
             </div>
             ) : null}
