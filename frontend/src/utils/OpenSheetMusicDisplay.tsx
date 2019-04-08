@@ -8,7 +8,6 @@ import { updateAbilities } from './api';
 import AbilityDisplay from './AbilitiyDisplay';
 
 import './osmd.css';
-import Practice from '../views/practice';
 
 interface OpenSheetMusicDisplayProps {
     username: string
@@ -128,6 +127,9 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
             this.firstNote = this.cursor.Iterator.CurrentVoiceEntries[0].Notes[0].halfTone;
             this.snippetId = parseInt(this.osmd.Sheet.TitleString);
             this.performance = [];
+            this.metronomeCount = 0;
+            this.startMetronomeTime = 0;
+            this.currentNoteTimeStamp = null;
             this.setState({ 
               status: PracticePageStatus.Ready, 
               performance: Object.keys(response.data).map(k => 
@@ -154,12 +156,18 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       if (!this.startMetronomeTime) this.startMetronomeTime = timestamp;
       if (timestamp - this.startMetronomeTime > this.BPS*1000) {
         this.metronome.play();
-        this.startMetronomeTime = 0;
+        this.startMetronomeTime = timestamp;
         if (this.state.status === PracticePageStatus.Starting) {
           this.metronomeCount++;
           if (this.metronomeCount === 5) {
-            this.metronomeCount = 0;
+            
+            const cursorVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries[0];
+            const currentNoteLength: number = cursorVoiceEntry.Notes[0].Length.RealValue;
+            this.currentNoteDuration = (currentNoteLength * 4) / (this.BPS);
+            console.log(this.currentNoteDuration);
             this.setState({ status: PracticePageStatus.Practicing });
+
+            if (this.props.username === 'demo') this.piano.play(cursorVoiceEntry.Notes[0].halfTone);
           }
         }
       }
@@ -190,7 +198,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
                   console.log("YOU HIT IT", hitNote);
                   this.performance.push(true);
                 } else {
-                  console.log({
+                  console.log("YOU MISSED", {
                     midiId: prevNote.halfTone,
                     timeStamp: prevNoteTimeStamp
                   })

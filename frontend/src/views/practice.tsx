@@ -22,10 +22,10 @@ class Practice extends Component<PracticeProps> {
         <AppBar position="absolute" color="primary">
           <Toolbar>
             <CardMedia image={Logo} title="Smart Piano Tutor" className="Header-Logo"/>
-            <Typography variant="h6" style={{flexGrow: 1, color: '#000', marginLeft: '15px' }}>
+            <Typography variant="h6" style={{flexGrow: 1, color: '#fff', marginLeft: '15px' }}>
               Smart Piano Tutor
             </Typography>
-            <Button variant="outlined" onClick={this.props.onSignOut}> Sign Out </Button>
+            <Button variant="outlined" color='inherit' style={{color: '#fff'}} onClick={this.props.onSignOut}> Sign Out </Button>
           </Toolbar>
         </AppBar>
         <OpenSheetMusicDisplay username={this.props.username}/>
