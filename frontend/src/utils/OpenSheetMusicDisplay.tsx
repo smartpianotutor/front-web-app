@@ -164,7 +164,7 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
             const cursorVoiceEntry: VoiceEntry = this.cursor.Iterator.CurrentVoiceEntries[0];
             const currentNoteLength: number = cursorVoiceEntry.Notes[0].Length.RealValue;
             this.currentNoteDuration = (currentNoteLength * 4) / (this.BPS);
-            console.log(this.currentNoteDuration);
+
             this.setState({ status: PracticePageStatus.Practicing });
 
             if (this.props.username === 'demo') this.piano.play(cursorVoiceEntry.Notes[0].halfTone);

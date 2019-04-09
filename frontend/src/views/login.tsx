@@ -12,6 +12,7 @@ import CardMedia from '@material-ui/core/CardMedia';
 
 import './login.css';
 import Logo from '../images/icon.png';
+import { verifyRegistrationRequirements, verifySignInRequirements } from './../requirements/login';
 
 interface LoginProps {
     onSignIn: any;
@@ -38,29 +39,13 @@ class Login extends Component<LoginProps> {
   };
 
   handleRegistration = () => {
-    if (this.state.newUsername == '') {
-      this.setState({regError: "Username cannot be empty."})
-    } else if (this.state.newUsername.length < 3) {
-      this.setState({loginError: "Your username must be at least 3 characters long."})
-    } else if (this.state.newPassword == '') {
-      this.setState({regError: "Password cannot be empty."})
-    } else if (this.state.newPassword.length < 3) {
-      this.setState({loginError: "Your password must be at least 3 characters long."})
-    } else if (this.state.newPassword != this.state.confirmPassword) {
-      this.setState({regError: "Your passwords do not match, please try again."})
-    } else {
-      this.props.onRegister(this.state.newUsername, this.state.newPassword);
-    }
+    const err = verifyRegistrationRequirements(this.state.newUsername, this.state.newPassword, this.state.confirmPassword);
+    if (err) { this.setState({ regError: err }) } else { this.props.onRegister(this.state.newUsername, this.state.newPassword) }
   }
 
   handleSignIn = () => {
-    if (this.state.username == '') {
-      this.setState({loginError: "Username cannot be empty."})
-    } else if (this.state.password == '') {
-      this.setState({loginError: "Password cannot be empty."})
-    } else {
-      this.props.onSignIn(this.state.username, this.state.password);
-    }
+    const err = verifySignInRequirements(this.state.username, this.state.password);
+    if (err) { this.setState({ loginError: err }) } else { this.props.onSignIn(this.state.username, this.state.password) }
   }
 
   handleUserInput = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>, field: string) => {
