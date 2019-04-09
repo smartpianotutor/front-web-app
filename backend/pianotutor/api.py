@@ -337,11 +337,17 @@ def get_sheet_music():
         # find focus pattern pool
         focus_pattern_list = ability_to_pattern[note_ability_data[focus_note]]
         # find focus pattern that fits
+        focus_pattern_iterations = 0
         while True:
             focus_pattern_func = random.SystemRandom().choice(focus_pattern_list)
             focus_ability = reverse_ability_lookup(focus_pattern_func)
             focus_pattern = eval(focus_pattern_func)(focus_note)
             if not does_include_ties(p, focus_pattern):
+                p.append(focus_pattern)
+                break
+            focus_pattern_iterations += 1
+            if focus_pattern_iterations == 100:
+                focus_pattern = [note.Note(midi_to_note[focus_note], quarterLength = 0.5)]
                 p.append(focus_pattern)
                 break
         update_note_difficulties(map(lambda note: note.pitch.midi, focus_pattern), focus_ability)
@@ -352,11 +358,17 @@ def get_sheet_music():
         for ability in range(0, note_ability_data[passive_note]+1):
             passive_pattern_list.extend(ability_to_pattern[ability])
         # find passive pattern that fits
+        passive_pattern_iterations = 0
         while True:
             passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
             passive_ability = reverse_ability_lookup(passive_pattern_func)
             passive_pattern = eval(passive_pattern_func)(passive_note)
             if not does_include_ties(p, passive_pattern):
+                p.append(passive_pattern)
+                break
+            passive_pattern_iterations += 1
+            if passive_pattern_iterations == 100:
+                passive_pattern = [note.Note(midi_to_note[passive_note], quarterLength = 0.5)]
                 p.append(passive_pattern)
                 break
         update_note_difficulties(map(lambda note: note.pitch.midi, passive_pattern), passive_ability)
