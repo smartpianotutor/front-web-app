@@ -1,3 +1,10 @@
+//Implements the following:
+
+// -3.2.1.3.2 The system shall validate the password matches the confirm password field.
+// -3.2.1.3.3 The system shall present an error message or a success message to the user in each case.
+// -3.2.1.3.4 The system shall validate the strength of the password with the minimum requirements.
+
+
 export function verifyRegistrationRequirements(username: string, password: string, confirmPassword: string): string {
 
     if (username == '') return "Username cannot be empty."
