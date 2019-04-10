@@ -1,10 +1,19 @@
 import React, { Component } from 'react';
 import Cookies from 'universal-cookie';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
 import Login from './views/login';
 import Practice from './views/practice';
 
 import { register, signIn, signOut } from './utils/api';
+
+const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: '#1c4587',
+    }
+  }
+})
 
 class App extends Component {
 
@@ -73,17 +82,20 @@ class App extends Component {
 
   render() {
     return (
-      this.state.loggedIn ?  
-        <Practice
-          username={this.state.userName}
-          onSignOut={this.hnadleSignOut}    
-        /> : 
-        <Login 
-          onSignIn={this.handleSignIn} 
-          onRegister={this.handleRegister} 
-          regError={this.state.regError} 
-          loginError={this.state.loginError}
-        />
+      <MuiThemeProvider theme={theme}>
+        {this.state.loggedIn ?  
+          <Practice
+            username={this.state.userName}
+            onSignOut={this.hnadleSignOut}    
+          /> : 
+          <Login 
+            onSignIn={this.handleSignIn} 
+            onRegister={this.handleRegister} 
+            regError={this.state.regError} 
+            loginError={this.state.loginError}
+          />
+        }
+      </MuiThemeProvider>
     );
   }
 }

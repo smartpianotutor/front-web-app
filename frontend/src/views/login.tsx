@@ -8,8 +8,13 @@ import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
+import CardMedia from '@material-ui/core/CardMedia';
 
 import './login.css';
+import Logo from '../images/icon.png';
+
+import { verifySignInRequirements } from './../requirements/login';
+import { verifyRegistrationRequirements } from './../requirements/signUp';
 
 interface LoginProps {
     onSignIn: any;
@@ -36,29 +41,13 @@ class Login extends Component<LoginProps> {
   };
 
   handleRegistration = () => {
-    if (this.state.newUsername == '') {
-      this.setState({regError: "Username cannot be empty."})
-    } else if (this.state.newUsername.length < 3) {
-      this.setState({loginError: "Your username must be at least 3 characters long."})
-    } else if (this.state.newPassword == '') {
-      this.setState({regError: "Password cannot be empty."})
-    } else if (this.state.newPassword.length < 3) {
-      this.setState({loginError: "Your password must be at least 3 characters long."})
-    } else if (this.state.newPassword != this.state.confirmPassword) {
-      this.setState({regError: "Your passwords do not match, please try again."})
-    } else {
-      this.props.onRegister(this.state.newUsername, this.state.newPassword);
-    }
+    const err = verifyRegistrationRequirements(this.state.newUsername, this.state.newPassword, this.state.confirmPassword);
+    if (err) { this.setState({ regError: err }) } else { this.props.onRegister(this.state.newUsername, this.state.newPassword) }
   }
 
   handleSignIn = () => {
-    if (this.state.username == '') {
-      this.setState({loginError: "Username cannot be empty."})
-    } else if (this.state.password == '') {
-      this.setState({loginError: "Password cannot be empty."})
-    } else {
-      this.props.onSignIn(this.state.username, this.state.password);
-    }
+    const err = verifySignInRequirements(this.state.username, this.state.password);
+    if (err) { this.setState({ loginError: err }) } else { this.props.onSignIn(this.state.username, this.state.password) }
   }
 
   handleUserInput = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>, field: string) => {
@@ -73,8 +62,8 @@ class Login extends Component<LoginProps> {
     const { value } = this.state;
 
     return (
-      <div className="Login">
-        <Typography variant="h3" className="header" gutterBottom>Smart Piano Tutor</Typography>
+      <div className="Login" >
+        <CardMedia image={Logo} title="Smart Piano Tutor" className="Media"/>
         <Paper className="paper">
           <Tabs value={value} variant="fullWidth" onChange={this.handleChange} style={{width: '100%'}} indicatorColor='primary'>
             <Tab label="Sign In" />
@@ -171,9 +160,7 @@ class Login extends Component<LoginProps> {
               </div>
             </form>
           }
-          
         </Paper>
-
       </div>
     );
   }

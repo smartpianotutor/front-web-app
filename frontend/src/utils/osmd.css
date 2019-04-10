@@ -1,0 +1,36 @@
+.Practice {
+    width: 100vw;
+    height: 100vh;
+    background-color: white;
+    margin-top: 126px;
+    margin-bottom: 200px;
+}
+
+.Practice-Text {
+    width: fit-content;
+    margin: auto;
+}
+
+.Welcome {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+.Scores {
+    display: flex;
+    width: 800px;
+    margin: auto;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.Score_Elem {
+    flex-grow: 1;
+    flex-shrink: 0;
+    text-align: center;
+    padding: 12px;
+}

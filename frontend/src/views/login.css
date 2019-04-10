@@ -6,7 +6,8 @@
     justify-content: center;
     flex-direction: column;
     align-items: center;
-    background-color: #364352;
+    background-color: #1c4587;
+    background-position: center;
   }
   
   .header {
@@ -35,4 +36,9 @@
     margin-top: 14px !important;
     font-size: 1rem !important;
   }
-  
+
+  .Media {
+    height: 160px;
+    width: 420px;
+    margin-bottom: 10vh;
+  }

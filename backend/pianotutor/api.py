@@ -9,6 +9,7 @@ import collections
 import sys
 import json
 import time
+import math
 
 from pianotutor.shared import error_response
 from pianotutor.auth import login_required
@@ -21,11 +22,11 @@ NUM_QUARTERS_IN_BAR = 4
 CONFIDENCE_THRESHOLD = 20
 
 ability_to_pattern = {
-    0: ['even_division_f', 'whole_beat_a', 'even_division_b'],
-    1: ['whole_beat_c', 'even_division_a', 'even_uneven_division_a'],
+    0: ['whole_beat_a', 'whole_beat_c'],
+    1: ['even_division_a', 'even_uneven_division_a'],
     2: ['even_uneven_division_f'],
     3: ['even_division_d', 'even_uneven_division_e', 'uneven_division_a', 'even_uneven_division_d', 'even_division_c', 'even_uneven_division_c'],
-    4: ['even_uneven_division_b','even_division_g', 'whole_beat_b', 'uneven_division_c'],
+    4: ['even_uneven_division_b','even_division_g', 'whole_beat_b', 'uneven_division_c', 'even_division_b', 'even_division_f'],
     5: ['uneven_division_b', 'uneven_uneven_division_a', 'whole_beat_d'],
     6: ['even_division_e', 'multi_beat_a', 'uneven_division_d'],
     7: ['multi_beat_b', 'uneven_uneven_division_b']
@@ -42,59 +43,47 @@ midi_to_note = collections.OrderedDict([(55, 'G3'), (57, 'A3'), (59, 'B3'), (60,
 
 note_difficulties = []
 
-def update_note_difficulties(*midi_ids):
-    func_name = sys._getframe().f_back.f_code.co_name
+def update_note_difficulties(midi_ids, difficulty):
     for midi_id in midi_ids:
-        note_difficulties.append([midi_id, reverse_ability_lookup(func_name)])
+        note_difficulties.append([midi_id, difficulty])
 
 def whole_beat_a(base_midi_id):
-    update_note_difficulties(base_midi_id)
     base_n = midi_to_note[base_midi_id]
-    return note.Note(base_n, quarterLength=1)
+    return [note.Note(base_n, quarterLength=1)]
 
 def whole_beat_b(base_midi_id):
-    update_note_difficulties(base_midi_id)
     base_n = midi_to_note[base_midi_id]
-    return note.Note(base_n, quarterLength=3)
+    return [note.Note(base_n, quarterLength=3)]
 
 def whole_beat_c(base_midi_id):
-    update_note_difficulties(base_midi_id)
     base_n = midi_to_note[base_midi_id]
-    return note.Note(base_n, quarterLength=2)
+    return [note.Note(base_n, quarterLength=2)]
 
 def whole_beat_d(base_midi_id):
-    update_note_difficulties(base_midi_id)
     base_n = midi_to_note[base_midi_id]
-    return note.Note(base_n, quarterLength=4)
+    return [note.Note(base_n, quarterLength=4)]
 
 def multi_beat_a(base_midi_id):
     base_n = midi_to_note[base_midi_id]
     n1 = note.Note(base_n, quarterLength=1.5)
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
-    n2_midi_id = list(midi_to_note.items())[base_n_index - 1][0]
-    n2 = note.Note(n2_midi_id, type='eighth')
-    update_note_difficulties(base_midi_id, n2_midi_id)
+    n2 = note.Note(list(midi_to_note.items())[base_n_index - 1][1], type='eighth')
     return [n1,n2]
 
 def multi_beat_b(base_midi_id):
     base_n = midi_to_note[base_midi_id]
     n1 = note.Note(base_n, type='eighth')
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
-    n2_midi_id = list(midi_to_note.items())[base_n_index - 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index - 1][1], quarterLength=1)
-    n3_midi_id = list(midi_to_note.items())[base_n_index - 2][0]
     n3 = note.Note(list(midi_to_note.items())[base_n_index - 2][1], type='eighth')
-    update_note_difficulties(base_midi_id, n2_midi_id, n3_midi_id)
     return [n1,n2,n3]
 
 def even_division_a(base_midi_id):
     base_n = midi_to_note[base_midi_id]
     n1 = note.Note(base_n, type='eighth')
     n1.beams.fill(1, 'start')
-    update_note_difficulties(base_midi_id)
     n2 = note.Note(base_n, type='eighth')
     n2.beams.fill(1, 'stop')
-    update_note_difficulties(base_midi_id, base_midi_id)
     return [n1,n2]
 
 def even_division_b(base_midi_id):
@@ -107,7 +96,6 @@ def even_division_b(base_midi_id):
     n3.beams.fill(2, 'continue')
     n4 = note.Note(base_n, type='16th')
     n4.beams.fill(2, 'stop')
-    update_note_difficulties(base_midi_id, base_midi_id, base_midi_id, base_midi_id)
     return [n1,n2,n3,n4]
 
 def even_division_c(base_midi_id):
@@ -115,10 +103,8 @@ def even_division_c(base_midi_id):
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
     n1 = note.Note(base_n, type='eighth')
     n1.beams.fill(1, 'start')
-    n2_midi_id = list(midi_to_note.items())[base_n_index - 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index - 1][1], type='eighth')
     n2.beams.fill(1, 'stop')
-    update_note_difficulties(base_midi_id, n2_midi_id)
     return [n1,n2]
 
 def even_division_d(base_midi_id):
@@ -128,12 +114,10 @@ def even_division_d(base_midi_id):
     n1.beams.fill(2, 'start')
     n2 = note.Note(base_n, type='16th')
     n2.beams.fill(2, 'continue')
-    n3_midi_id = list(midi_to_note.items())[base_n_index + 2][0]
     n3 = note.Note(list(midi_to_note.items())[base_n_index + 2][1], type='16th')
     n3.beams.fill(2, 'continue')
     n4 = note.Note(list(midi_to_note.items())[base_n_index + 2][1], type='16th')
     n4.beams.fill(2, 'stop')
-    update_note_difficulties(base_midi_id, base_midi_id, n3_midi_id, n3_midi_id)
     return [n1,n2,n3,n4]
 
 def even_division_e(base_midi_id):
@@ -144,7 +128,6 @@ def even_division_e(base_midi_id):
     n2.beams.fill(1, 'continue')
     n3 = note.Note(base_n, type='eighth')
     n3.beams.fill(1, 'stop')
-    update_note_difficulties(base_midi_id, base_midi_id, base_midi_id)
     return [n1,n2,n3]
 
 def even_division_f(base_midi_id):
@@ -152,16 +135,12 @@ def even_division_f(base_midi_id):
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
     n1 = note.Note(base_n, type='16th')
     n1.beams.fill(2, 'start')
-    n2_midi_id = list(midi_to_note.items())[base_n_index + 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index + 1][1], type='16th')
     n2.beams.fill(2, 'continue')
-    n3_midi_id = list(midi_to_note.items())[base_n_index + 2][0]
     n3 = note.Note(list(midi_to_note.items())[base_n_index + 2][1], type='16th')
     n3.beams.fill(2, 'continue')
-    n4_midi_id = list(midi_to_note.items())[base_n_index + 3][0]
     n4 = note.Note(list(midi_to_note.items())[base_n_index + 3][1], type='16th')
     n4.beams.fill(2, 'stop')
-    update_note_difficulties(base_midi_id, n2_midi_id, n3_midi_id, n4_midi_id)
     return [n1,n2,n3,n4]
 
 def even_division_g(base_midi_id):
@@ -169,13 +148,10 @@ def even_division_g(base_midi_id):
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
     n1 = note.Note(base_n, type='eighth')
     n1.beams.fill(1, 'start')
-    n2_midi_id = list(midi_to_note.items())[base_n_index - 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index - 1][1], type='eighth')
     n2.beams.fill(1, 'continue')
-    n3_midi_id = list(midi_to_note.items())[base_n_index - 2][0]
     n3 = note.Note(list(midi_to_note.items())[base_n_index - 2][1], type='eighth')
     n3.beams.fill(1, 'stop')
-    update_note_difficulties(base_midi_id, n2_midi_id, n3_midi_id)
     return [n1,n2,n3]
 
 def even_uneven_division_a(base_midi_id):
@@ -188,7 +164,6 @@ def even_uneven_division_a(base_midi_id):
     n3 = note.Note(base_n, type='16th')
     n3.beams.append('stop')
     n3.beams.append('stop')
-    update_note_difficulties(base_midi_id, base_midi_id, base_midi_id)
     return [n1,n2,n3]
 
 def even_uneven_division_b(base_midi_id):
@@ -201,7 +176,6 @@ def even_uneven_division_b(base_midi_id):
     n2.beams.append('stop')
     n3 = note.Note(base_n, type='eighth')
     n3.beams.append('stop')
-    update_note_difficulties(base_midi_id, base_midi_id, base_midi_id)
     return [n1,n2, n3]
 
 def even_uneven_division_c(base_midi_id):
@@ -209,14 +183,12 @@ def even_uneven_division_c(base_midi_id):
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
     n1 = note.Note(base_n, type='eighth')
     n1.beams.append('start')
-    n2_midi_id = list(midi_to_note.items())[base_n_index - 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index - 1][1], type='16th')
     n2.beams.append('continue')
     n2.beams.append('start')
     n3 = note.Note(list(midi_to_note.items())[base_n_index - 1][1], type='16th')
     n3.beams.append('stop')
     n3.beams.append('stop')
-    update_note_difficulties(base_midi_id, n2_midi_id, n2_midi_id)
     return [n1,n2,n3]
 
 def even_uneven_division_d(base_midi_id):
@@ -237,15 +209,12 @@ def even_uneven_division_e(base_midi_id):
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
     n1 = note.Note(base_n, type='eighth')
     n1.beams.append('start')
-    n2_midi_id = list(midi_to_note.items())[base_n_index + 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index + 1][1], type='16th')
     n2.beams.append('continue')
     n2.beams.append('start')
-    n3_midi_id = list(midi_to_note.items())[base_n_index + 2][0]
     n3 = note.Note(list(midi_to_note.items())[base_n_index + 2][1], type='16th')
     n3.beams.append('stop')
     n3.beams.append('stop')
-    update_note_difficulties(base_midi_id, n2_midi_id, n3_midi_id)
     return [n1,n2,n3]
 
 def even_uneven_division_f(base_midi_id):
@@ -254,14 +223,11 @@ def even_uneven_division_f(base_midi_id):
     n1 = note.Note(base_n, type='16th')
     n1.beams.append('start')
     n1.beams.append('start')
-    n2_midi_id = list(midi_to_note.items())[base_n_index + 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index + 1][1], type='16th')
     n2.beams.append('continue')
     n2.beams.append('stop')
-    n3_midi_id = list(midi_to_note.items())[base_n_index + 2][0]
     n3 = note.Note(list(midi_to_note.items())[base_n_index + 2][1], type='eighth')
     n3.beams.append('stop')
-    update_note_difficulties(base_midi_id, n2_midi_id, n3_midi_id)
     return [n1,n2,n3]
 
 def uneven_division_a(base_midi_id):
@@ -271,7 +237,6 @@ def uneven_division_a(base_midi_id):
     n2 = note.Note(base_n, type='16th')
     n2.beams.append('stop')
     n2.beams.append('partial', 'left')
-    update_note_difficulties(base_midi_id, base_midi_id)
     return [n1,n2]
 
 def uneven_division_b(base_midi_id):
@@ -281,7 +246,6 @@ def uneven_division_b(base_midi_id):
     n1.beams.append('partial', 'right')
     n2 = note.Note(base_n, quarterLength=0.75)
     n2.beams.append('stop')
-    update_note_difficulties(base_midi_id, base_midi_id)
     return [n1,n2]
 
 def uneven_division_c(base_midi_id):
@@ -289,11 +253,9 @@ def uneven_division_c(base_midi_id):
     base_n_index = list(midi_to_note.keys()).index(base_midi_id)
     n1 = note.Note(base_n, quarterLength=0.75)
     n1.beams.append('start')
-    n2_midi_id = list(midi_to_note.items())[base_n_index + 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index + 1][1], type='16th')
     n2.beams.append('stop')
     n2.beams.append('partial', 'left')
-    update_note_difficulties(base_midi_id, n2_midi_id)
     return [n1,n2]
 
 def uneven_division_d(base_midi_id):
@@ -302,10 +264,8 @@ def uneven_division_d(base_midi_id):
     n1 = note.Note(base_n, type='16th')
     n1.beams.append('start')
     n1.beams.append('partial', 'right')
-    n2_midi_id = list(midi_to_note.items())[base_n_index + 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index + 1][1], quarterLength=0.75)
     n2.beams.append('stop')
-    update_note_difficulties(base_midi_id, n2_midi_id)
     return [n1,n2]
 
 def uneven_uneven_division_a(base_midi_id):
@@ -318,7 +278,6 @@ def uneven_uneven_division_a(base_midi_id):
     n3 = note.Note(base_n, type='16th')
     n3.beams.append('stop')
     n3.beams.append('partial', 'left')
-    update_note_difficulties(base_midi_id, base_midi_id, base_midi_id)
     return [n1,n2,n3]
 
 
@@ -328,16 +287,23 @@ def uneven_uneven_division_b(base_midi_id):
     n1 = note.Note(base_n, type='16th')
     n1.beams.append('start')
     n1.beams.append('partial', 'right')
-    n2_midi_id = list(midi_to_note.items())[base_n_index + 1][0]
     n2 = note.Note(list(midi_to_note.items())[base_n_index + 1][1], type='eighth')
     n2.beams.append('continue')
-    n3_midi_id = list(midi_to_note.items())[base_n_index + 2][0]
     n3 = note.Note(list(midi_to_note.items())[base_n_index + 2][1], type='16th')
     n3.beams.append('stop')
     n3.beams.append('partial', 'left')
-    update_note_difficulties(base_midi_id, n2_midi_id, n3_midi_id)
     return [n1,n2,n3]
 
+def does_include_ties(p, focus_pattern):
+    quarterLength_so_far = p.duration.quarterLength
+    for note in focus_pattern:
+        if quarterLength_so_far % 4 != 0: #not full
+            old_num_measures = math.ceil(quarterLength_so_far/4)
+            quarterLength_so_far += note.quarterLength
+            new_num_measures = math.ceil(quarterLength_so_far/4)
+            if new_num_measures > old_num_measures:
+                return True
+    return False
 
 @bp.route('/get_sheet_music', methods=('GET',))
 @login_required
@@ -365,24 +331,48 @@ def get_sheet_music():
 
     # add initial half focus note
     p.append(whole_beat_c(focus_note))
+    update_note_difficulties([focus_note], reverse_ability_lookup("whole_beat_c"))
     
     while(p.duration.quarterLength < (NUM_BARS * NUM_QUARTERS_IN_BAR)):
-        # add focus note
+        # find focus pattern pool
         focus_pattern_list = ability_to_pattern[note_ability_data[focus_note]]
-        focus_pattern_func = random.SystemRandom().choice(focus_pattern_list)
-        focus_pattern = eval(focus_pattern_func)(focus_note)
-        p.append(focus_pattern)
+        # find focus pattern that fits
+        focus_pattern_iterations = 0
+        while True:
+            focus_pattern_func = random.SystemRandom().choice(focus_pattern_list)
+            focus_ability = reverse_ability_lookup(focus_pattern_func)
+            focus_pattern = eval(focus_pattern_func)(focus_note)
+            if not does_include_ties(p, focus_pattern):
+                p.append(focus_pattern)
+                break
+            focus_pattern_iterations += 1
+            if focus_pattern_iterations == 100:
+                focus_pattern = [note.Note(midi_to_note[focus_note], quarterLength = 0.5)]
+                p.append(focus_pattern)
+                break
+        update_note_difficulties(map(lambda note: note.pitch.midi, focus_pattern), focus_ability)
 
-        # add passive note
+        # find passive pattern pool
         passive_note = random.SystemRandom().choice(passive_note_list)
         passive_pattern_list = []
-
-        # add passive note generation to all patterns up to and including the ability
-        for ability in range(0, (note_ability_data[passive_note]+1)):
+        for ability in range(0, note_ability_data[passive_note]+1):
             passive_pattern_list.extend(ability_to_pattern[ability])
-        passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
-        passive_pattern = eval(passive_pattern_func)(passive_note)
-        p.append(passive_pattern)
+        # find passive pattern that fits
+        passive_pattern_iterations = 0
+        while True:
+            passive_pattern_func = random.SystemRandom().choice(passive_pattern_list)
+            passive_ability = reverse_ability_lookup(passive_pattern_func)
+            passive_pattern = eval(passive_pattern_func)(passive_note)
+            if not does_include_ties(p, passive_pattern):
+                p.append(passive_pattern)
+                break
+            passive_pattern_iterations += 1
+            if passive_pattern_iterations == 100:
+                passive_pattern = [note.Note(midi_to_note[passive_note], quarterLength = 0.5)]
+                p.append(passive_pattern)
+                break
+        update_note_difficulties(map(lambda note: note.pitch.midi, passive_pattern), passive_ability)
+
     
     while(p.quarterLength > (NUM_BARS * NUM_QUARTERS_IN_BAR)):
         p.pop(len(p) - 1)
@@ -415,6 +405,7 @@ def update_abilities():
     db = get_db()
     user = g.user[0]
     snippet_id = int(request.form['snippet_id'])
+    print(request.form["performance"])
     performance = json.loads(request.form['performance'])
 
     res = db.execute("select * from Snippet where snippet_id = ?", (snippet_id,))

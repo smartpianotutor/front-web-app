@@ -1,21 +1,4 @@
-.Practice {
-    width: 100vw;
-    height: 100vh;
-    background-color: white;
-    margin-top: 32px;
-}
-
-.Practice-Text {
-    width: fit-content;
-    margin: auto;
-    margin-top: 10vh;
-}
-
-.Welcome {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
+.Header-Logo {
+    width: 40px;
+    height: 40px
 }
