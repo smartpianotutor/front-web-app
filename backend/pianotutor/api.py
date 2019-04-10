@@ -38,11 +38,12 @@ def reverse_ability_lookup(func_name):
     for k,v in ability_to_pattern.items():
         if func_name in v:
             return k
-
+# Functional Requirement 3.2.6.3.1 : Making sure music is playable by only including notes in patterns that are within a range of 3 octaves and hence not that far apart phsycially on the piano keyboard ~ hence playable.
 midi_to_note = collections.OrderedDict([(55, 'G3'), (57, 'A3'), (59, 'B3'), (60, 'C4'), (62, 'D4'), (64, 'E4'), (65, 'F4'), (67, 'G4'), (69, 'A4'), (71, 'B4'), (72, 'C5'), (74, 'D5'), (76, 'E5')])
 
 note_difficulties = []
 
+# Functional Requirement 3.2.5.3.2: to update note difficulties which are generated based on assigning level data from ability_to_pattern mapping.
 def update_note_difficulties(midi_ids, difficulty):
     for midi_id in midi_ids:
         note_difficulties.append([midi_id, difficulty])
@@ -312,6 +313,7 @@ def get_sheet_music():
     note_difficulties.clear()
     db = get_db()
     user = g.user[0]
+    # Functional Requirement 3.2.6.3.3 algorithm below to generate challenging training material based on user ability on notes.
     results = db.execute('SELECT midi_id, ability FROM UserAbility WHERE user_id = ? ;', (user, )).fetchall()
     for result in results:
         note_ability_data[result[0]] = result[1]
@@ -331,6 +333,7 @@ def get_sheet_music():
 
     # add initial half focus note
     p.append(whole_beat_c(focus_note))
+    
     update_note_difficulties([focus_note], reverse_ability_lookup("whole_beat_c"))
     
     while(p.duration.quarterLength < (NUM_BARS * NUM_QUARTERS_IN_BAR)):
@@ -388,12 +391,10 @@ def get_sheet_music():
     sc.metadata.title = snippet_id
     db.commit()
 
+    # Functional Requirement: 3.2.6.3.2 The system shall generate markup adherent to the characteristics of a valid MusicXML. We rely on the music21  internal library to generate the musicXML so we rely on their testing for ensuring validity
     GEX = musicxml.m21ToXml.GeneralObjectExporter(sc)
     out = GEX.parse()
     outStr = out.decode('utf-8').strip()
-    # f = open(str(pathlib.Path(__file__).parent)+"/out/%.20f.xml" % time.time(),'w')
-    # f.write(outStr)
-    # f.close()
 
     return Response(outStr, mimetype='text/xml')
 
