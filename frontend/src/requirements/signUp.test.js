@@ -51,7 +51,7 @@ describe('3.2.1.3.4 The system shall validate the strength of the password with 
 
     const err = verifyRegistrationRequirements(username, password, password);
 
-    expect(err).toEqual('Your password must be at least 3 characters long.')
+    expect(err).toEqual('Your password must be at least 4 characters long.')
   })
 
   it('prevents registration with empty password', () => {

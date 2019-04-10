@@ -228,7 +228,9 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       if (this.state.status === PracticePageStatus.Starting || this.state.status === PracticePageStatus.Practicing) window.requestAnimationFrame(this.update);
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // WEBMIDI FUNCTIONS //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     setUpMIDIAccess = () => {
       this.setState({ status: PracticePageStatus.ConnectingMIDI });
       this.context = new AudioContext();
@@ -305,6 +307,9 @@ class OpenSheetMusicDisplay extends Component<OpenSheetMusicDisplayProps> {
       var pressedNote = this.activeNotes.find((n) => n.MIDIid === noteNum && n.Length === 0);
       if (pressedNote) pressedNote.Length = ((Date.now() - this.currentSheetMusicStartTime) / 1000) - pressedNote.Timestamp;
     }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // WEBMIDI FUNCTIONS //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
     render() {
       switch(this.state.status) {
