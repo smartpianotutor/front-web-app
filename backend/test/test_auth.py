@@ -15,6 +15,20 @@ def test_register(client, app):
             "select * from User where username = 'a'",
         ).fetchone() is not None
 
+    # test that the user was inserted into the database
+    with app.app_context():
+        assert get_db().execute(
+            "select * from User where username = 'a'",
+        ).fetchone() is not None
+
+        # test that we use a strong hashing function (sha256)
+        assert get_db().execute(
+            "select password_sha256 from User where username = 'a'",
+        ).fetchone()[0] == "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
+
+    # print("3.2.1. passed")
+
+
 
 @pytest.mark.parametrize(('username', 'password', 'message'), (
     ('', '', b'Username is required.'),
