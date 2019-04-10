@@ -1,32 +1,36 @@
 // Tests for:
 
-// -3.2.1.3.2 The system shall validate the password matches the confirm password field.
-// -3.2.1.3.3 The system shall present an error message or a success message to the user in each case.
-// -3.2.1.3.4 The system shall validate the strength of the password with the minimum requirements.
 // -3.2.2.3.3 The system shall display the result of the validations for the user - either successfully logged in or unsuccessful login attempt.
 
-import { verifySignInRequirements, verifyRegistrationRequirements } from './login';
+import { verifySignInRequirements } from './login';
 
-// 3.2.1.3.2
-it('3.2.1.3.2 - fail to register with unmatching passwords', () => {
-  const username = 'test';
-  const password = 'hello123';
-  const confirmPassword = 'hello321';
+describe('3.2.2.3.3 The system shall display the result of the validations for the user - either successfully logged in or unsuccessful login attempt.', () => {
+  
+  it('presents error message when username is empty during login', () => {
+    const username = '';
+    const password = '123';
+    
+    const err = verifySignInRequirements(username, password);
 
-  const err = verifyRegistrationRequirements(username, password, confirmPassword);
+    expect(err).toEqual('Username cannot be empty.');
+  });
 
-  expect(err).toEqual('Your passwords do not match, please try again.');
+  it('presents error message when password is empty during login', () => {
+    const username = '123';
+    const password = '';
+    
+    const err = verifySignInRequirements(username, password);
+
+    expect(err).toEqual('Password cannot be empty.');
+  });
+
+  it('presents no error message when login parameters are sufficient', () => {
+    const username = '123';
+    const password = '123';
+    
+    const err = verifySignInRequirements(username, password);
+
+    expect(err).toBeNull();
+  });
+
 });
-
-it('3.2.1.3.2 - successfully register with matching passwords', () => {
-  const username = 'test';
-  const password = 'hello123';
-  const confirmPassword = password;
-
-  const err = verifyRegistrationRequirements(username, password, confirmPassword);
-
-  expect(err).toBeNull();
-});
-
-// 3.2.1.3.3
-

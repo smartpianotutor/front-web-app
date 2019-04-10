@@ -12,7 +12,9 @@ import CardMedia from '@material-ui/core/CardMedia';
 
 import './login.css';
 import Logo from '../images/icon.png';
-import { verifyRegistrationRequirements, verifySignInRequirements } from './../requirements/login';
+
+import { verifySignInRequirements } from './../requirements/login';
+import { verifyRegistrationRequirements } from './../requirements/signUp';
 
 interface LoginProps {
     onSignIn: any;
